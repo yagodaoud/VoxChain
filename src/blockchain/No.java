@@ -143,28 +143,62 @@ public class No {
     // ============ PROCESSAMENTO DE BLOCOS ============
 
     public synchronized void processarNovoBloco(Bloco blocoRecebido, String peerOrigem) {
-        int meuTamanho = blockchain.getTamanho();
+        if (blocoRecebido == null) {
+            System.out.println("[" + id + "] ✗ Bloco nulo recebido");
+            return;
+        }
 
-        if (blocoRecebido.getIndice() == meuTamanho) {
-            // Bloco sequencial - valida e adiciona
+        int meuTamanho = blockchain.getTamanho();
+        int blocoIndice = blocoRecebido.getIndice();
+
+        System.out.println("[" + id + "] Recebendo bloco " + blocoIndice +
+                " (meu tamanho: " + meuTamanho + ")");
+
+        if (blocoIndice == meuTamanho) {
+            // ========== BLOCO SEQUENCIAL ==========
+            System.out.println("[" + id + "] Bloco sequencial recebido (esperado)");
+
             if (blockchain.validarBloco(blocoRecebido)) {
-                System.out.println("[" + id + "] ✓ Bloco válido adicionado: " + blocoRecebido.getIndice());
+                System.out.println("[" + id + "] ✓ Bloco válido adicionado: " + blocoIndice);
+
                 blockchain.adicionarBloco(blocoRecebido);
-                minerador.parar();
+                minerador.parar(); // Para mineração (já temos novo bloco)
                 blockchain.limparTransacoesProcessadas(blocoRecebido);
 
-                // Rebroadcast
+                // Rebroadcast para outros nós (exceto quem enviou)
                 rebroadcastBloco(blocoRecebido, peerOrigem);
+
+                System.out.println("[" + id + "] Tamanho blockchain agora: " + blockchain.getTamanho());
             } else {
                 System.out.println("[" + id + "] ✗ Bloco inválido rejeitado");
+                // Pode indicar fork ou ataque - não faz nada, espera novo bloco
             }
-        } else if (blocoRecebido.getIndice() > meuTamanho) {
-            System.out.println("[" + id + "] ⚠ Blockchain desatualizada, sincronizando...");
+
+        } else if (blocoIndice > meuTamanho) {
+            // ========== BLOCKCHAIN DESATUALIZADA ==========
+            int diferenca = blocoIndice - meuTamanho;
+            System.out.println("[" + id + "] ⚠ Blockchain desatualizada (" + diferenca +
+                    " blocos atrás), sincronizando...");
+
             // Requisita blockchain completa
             for (Peer peer : peers) {
                 if (peer.getId().equals(peerOrigem) && peer.isConectado()) {
                     peer.enviar(new MensagemP2P(TipoMensagem.REQUISITAR_BLOCKCHAIN, null, this.id));
+                    System.out.println("[" + id + "] Requisição de blockchain enviada para " + peerOrigem);
+                    break;
                 }
+            }
+
+        } else if (blocoIndice < meuTamanho) {
+            // ========== BLOCO ANTIGO (FORK) ==========
+            System.out.println("[" + id + "] ⚠ Bloco mais antigo recebido (possível fork)");
+            System.out.println("[" + id + "]   Bloco: " + blocoIndice + ", Meu tamanho: " + meuTamanho);
+
+            // Se for apenas 1 bloco atrás, pode ser fork - ignora silenciosamente
+            // Se for muito atrás, ignora (já tem a cadeia correta)
+
+            if (meuTamanho - blocoIndice <= 2) {
+                System.out.println("[" + id + "] Fork detectado, mantendo minha cadeia (maior)");
             }
         }
     }

@@ -1,8 +1,9 @@
 package modelo;
 
+import java.io.Serializable;
 import java.time.Instant;
 
-public class Voto {
+public class Voto implements Serializable {
     private String idEleitor;
     private String candidato;
     private String tipoCandidato;
