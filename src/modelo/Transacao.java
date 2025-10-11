@@ -9,15 +9,16 @@ import modelo.enums.TipoTransacao;
 public class Transacao implements Serializable {
     private String id;
     private TipoTransacao tipo;
-    private Object dados;
-    private String idAdmin;
+    private Serializable payload;
+    private String idOrigem;
     private long timestamp;
 
-    public Transacao(TipoTransacao tipo, Object dados, String idAdmin) {
-        this.id = BlockchainGovernamental.gerarIdUnico(idAdmin, tipo, dados, timestamp);
+    public Transacao(TipoTransacao tipo, Serializable payload, String idOrigem) {
+        this.timestamp = Instant.now().toEpochMilli();
+        this.id = BlockchainGovernamental.gerarIdUnico(idOrigem, tipo, payload, timestamp);
         this.tipo = tipo;
-        this.dados = dados;
-        this.idAdmin = idAdmin;
+        this.payload = payload;
+        this.idOrigem = idOrigem;
         this.timestamp = Instant.now().toEpochMilli();
     }
 
@@ -29,12 +30,12 @@ public class Transacao implements Serializable {
         return tipo;
     }
 
-    public Object getDados() {
-        return dados;
+    public Serializable getPayload() {
+        return payload;
     }
 
-    public String getIdAdmin() {
-        return idAdmin;
+    public String getIdOrigem() {
+        return idOrigem;
     }
 
     public long getTimestamp() {
@@ -43,6 +44,6 @@ public class Transacao implements Serializable {
 
     @Override
     public String toString() {
-        return tipo + dados.toString() + idAdmin + timestamp;
+        return tipo + payload.toString() + idOrigem + timestamp;
     }
 }

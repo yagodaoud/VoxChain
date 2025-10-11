@@ -234,21 +234,21 @@ public class BlockchainGovernamental implements Serializable {
 
             switch (t.getTipo()) {
                 case CADASTRO_ADMIN:
-                    Administrador admin = (Administrador) t.getDados();
+                    Administrador admin = (Administrador) t.getPayload();
                     if (admin != null) {
                         admins.put(admin.getId(), admin);
                     }
                     break;
 
                 case CADASTRO_ELEITOR:
-                    Eleitor eleitor = (Eleitor) t.getDados();
+                    Eleitor eleitor = (Eleitor) t.getPayload();
                     if (eleitor != null) {
-                        eleitores.put(eleitor.getTituloDeEleitor(), eleitor);
+                        eleitores.put(eleitor.getTituloDeEleitorHash(), eleitor);
                     }
                     break;
 
                 case CADASTRO_CANDIDATO:
-                    Candidato candidato = (Candidato) t.getDados();
+                    Candidato candidato = (Candidato) t.getPayload();
                     if (candidato != null) {
                         candidatos.put(candidato.getNumero(), candidato);
                     }
@@ -257,7 +257,7 @@ public class BlockchainGovernamental implements Serializable {
                 case CRIACAO_ELEICAO:
                 case INICIO_ELEICAO:
                 case FIM_ELEICAO:
-                    Eleicao eleicao = (Eleicao) t.getDados();
+                    Eleicao eleicao = (Eleicao) t.getPayload();
                     if (eleicao != null) {
                         eleicoes.put(eleicao.getId(), eleicao);
                     }

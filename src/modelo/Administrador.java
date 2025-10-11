@@ -1,5 +1,8 @@
 package modelo;
 
+import modelo.enums.JurisdicaoAdmin;
+import modelo.enums.NivelAcessoAdmin;
+
 import java.io.Serializable;
 import java.security.MessageDigest;
 
@@ -8,20 +11,17 @@ public class Administrador implements Serializable {
     private String id;
     private String nome;
     private String senhaHash;
-    private NivelAcesso nivel;
+    private NivelAcessoAdmin nivel;
+    private JurisdicaoAdmin jurisdicao;
     private boolean ativo;
 
-    public enum NivelAcesso {
-        SUPER_ADMIN, // Pode tudo
-        ADMIN_TSE, // Gerencia eleições
-        OPERADOR // Apenas consulta
-    }
 
-    public Administrador(String id, String nome, String senha, NivelAcesso nivel) {
+    public Administrador(String id, String nome, String senha, NivelAcessoAdmin nivel, JurisdicaoAdmin jurisdicao) {
         this.id = id;
         this.nome = nome;
         this.senhaHash = hashSenha(senha);
         this.nivel = nivel;
+        this.jurisdicao = jurisdicao;
         this.ativo = true;
     }
 
@@ -58,11 +58,18 @@ public class Administrador implements Serializable {
         return senhaHash;
     }
 
-    public NivelAcesso getNivel() {
+    public NivelAcessoAdmin getNivel() {
         return nivel;
+    }
+
+    public JurisdicaoAdmin getJurisdicao() {
+        return jurisdicao;
     }
 
     public boolean isAtivo() {
         return ativo;
     }
+
+    public void desativar() { this.ativo = false; }
+    public void ativar() { this.ativo = true; }
 }
