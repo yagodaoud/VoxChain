@@ -9,6 +9,7 @@ import java.util.List;
 import modelo.Transacao;
 
 public class Bloco implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private int indice;
     private long timestamp;
@@ -24,6 +25,7 @@ public class Bloco implements Serializable {
         this.transacoes = new ArrayList<>(transacoes);
         this.hashAnterior = hashAnterior;
         this.nonce = 0;
+        this.mineradoPor = mineradoPor;
         this.hash = calcularHash();
     }
 
@@ -36,8 +38,9 @@ public class Bloco implements Serializable {
             StringBuilder hexString = new StringBuilder();
             for (byte b : hashBytes) {
                 String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1)
+                if (hex.length() == 1) {
                     hexString.append('0');
+                }
                 hexString.append(hex);
             }
             return hexString.toString();
@@ -62,6 +65,8 @@ public class Bloco implements Serializable {
         }
     }
 
+    // ==================== GETTERS ====================
+
     public int getIndice() {
         return indice;
     }
@@ -80,5 +85,43 @@ public class Bloco implements Serializable {
 
     public long getTimestamp() {
         return timestamp;
+    }
+
+    public int getNonce() {
+        return nonce;
+    }
+
+    public String getMineradoPor() {
+        return mineradoPor;
+    }
+
+    public String getHashTruncado(int tamanho) {
+        if (hash == null || hash.length() == 0) {
+            return "0";
+        }
+        int fim = Math.min(tamanho, hash.length());
+        return hash.substring(0, fim) + (fim < hash.length() ? "..." : "");
+    }
+
+    public String getHashAnteriorTruncado(int tamanho) {
+        if (hashAnterior == null || hashAnterior.length() == 0) {
+            return "[GENESIS]";
+        }
+        if (hashAnterior.equals("0")) {
+            return "[GENESIS]";
+        }
+        int fim = Math.min(tamanho, hashAnterior.length());
+        return hashAnterior.substring(0, fim) + (fim < hashAnterior.length() ? "..." : "");
+    }
+
+
+    @Override
+    public String toString() {
+        return "Bloco{" +
+                "indice=" + indice +
+                ", hash=" + hash.substring(0, 16) + "..." +
+                ", transacoes=" + transacoes.size() +
+                ", mineradoPor='" + mineradoPor + '\'' +
+                '}';
     }
 }

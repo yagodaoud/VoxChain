@@ -45,4 +45,24 @@ public class Administrador implements Serializable {
     public boolean verificarSenha(String senha) {
         return hashSenha(senha).equals(senhaHash);
     }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public String getSenhaHash() {
+        return senhaHash;
+    }
+
+    public NivelAcesso getNivel() {
+        return nivel;
+    }
+
+    public boolean isAtivo() {
+        return ativo;
+    }
 }

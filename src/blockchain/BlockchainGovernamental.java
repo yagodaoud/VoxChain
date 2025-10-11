@@ -3,6 +3,7 @@ package blockchain;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,7 +15,9 @@ import modelo.Eleitor;
 import modelo.Transacao;
 import modelo.enums.TipoTransacao;
 
-class BlockchainGovernamental implements Serializable {
+public class BlockchainGovernamental implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private List<Bloco> cadeia;
     private List<Transacao> transacoesPendentes;
     private int dificuldade;
@@ -27,8 +30,12 @@ class BlockchainGovernamental implements Serializable {
     private Map<String, Eleicao> eleicoes;
 
     // Controle de votos por eleição
-    private Map<String, Set<String>> votosRegistrados; // idEleicao -> Set de títulos
+    private Map<String, Set<String>> votosRegistrados; // idEleicao -> Set de "titulo-cargo"
     private Map<String, Map<String, Map<String, Integer>>> resultados; // idEleicao -> cargo -> candidato -> contagem
+
+    public BlockchainGovernamental() {
+        this(2, 5); // Valores padrão
+    }
 
     public BlockchainGovernamental(int dificuldade, int transacoesMaximasPorBloco) {
         this.cadeia = new ArrayList<>();
@@ -45,8 +52,9 @@ class BlockchainGovernamental implements Serializable {
         this.resultados = new HashMap<>();
 
         criarBlocoGenesis();
-        criarAdminInicial();
     }
+
+    // ==================== BLOCO GÊNESIS ====================
 
     private void criarBlocoGenesis() {
         List<Transacao> transacoesGenesis = new ArrayList<>();
@@ -55,12 +63,312 @@ class BlockchainGovernamental implements Serializable {
         cadeia.add(genesis);
     }
 
-    private void criarAdminInicial() {
-        // Admin root do sistema
-        Administrador root = new Administrador("ROOT", "Sistema TSE", "admin123",
-                Administrador.NivelAcesso.SUPER_ADMIN);
-        Transacao t = new Transacao(TipoTransacao.CADASTRO_ADMIN, root, "SYSTEM");
+    // ==================== GERENCIAMENTO DE TRANSAÇÕES ====================
+
+    public synchronized boolean adicionarAoPool(Transacao t) {
+        if (t == null) return false;
+
+        // Verifica se já existe
+        if (transacaoExiste(t)) {
+            return false;
+        }
+
         transacoesPendentes.add(t);
-        minerarTransacoesPendentes("SYSTEM");
+        return true;
+    }
+
+    public synchronized boolean transacaoExiste(Transacao t) {
+        if (t == null) return false;
+
+        // Verifica em todos os blocos
+        for (Bloco bloco : cadeia) {
+            for (Transacao tx : bloco.getTransacoes()) {
+                if (tx.getId() != null && tx.getId().equals(t.getId())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public synchronized int getPoolSize() {
+        return transacoesPendentes.size();
+    }
+
+    public synchronized boolean temTransacoesPendentes() {
+        return !transacoesPendentes.isEmpty();
+    }
+
+    // ==================== CRIAÇÃO E MINERAÇÃO DE BLOCOS ====================
+
+    public synchronized Bloco criarBlocoCandidato() {
+        if (transacoesPendentes.isEmpty()) {
+            return null;
+        }
+
+        List<Transacao> transacoesBloco = new ArrayList<>();
+
+        // Pega até o máximo de transações
+        for (int i = 0; i < Math.min(transacoesMaximasPorBloco, transacoesPendentes.size()); i++) {
+            transacoesBloco.add(transacoesPendentes.get(i));
+        }
+
+        Bloco novoBloco = new Bloco(
+                cadeia.size(),
+                transacoesBloco,
+                obterUltimoBloco().getHash(),
+                "MINERADOR"
+        );
+
+        return novoBloco;
+    }
+
+    public synchronized void adicionarBloco(Bloco bloco) {
+        if (bloco == null) return;
+
+        cadeia.add(bloco);
+        atualizarIndices(bloco);
+    }
+
+    public synchronized void limparTransacoesProcessadas(Bloco bloco) {
+        if (bloco == null) return;
+
+        for (Transacao t : bloco.getTransacoes()) {
+            transacoesPendentes.remove(t);
+        }
+    }
+
+    // ==================== VALIDAÇÃO ====================
+
+    public synchronized boolean validarBloco(Bloco bloco) {
+        if (bloco == null) {
+            System.err.println("Bloco nulo");
+            return false;
+        }
+
+        // Valida hash
+        if (!bloco.getHash().equals(bloco.calcularHash())) {
+            System.err.println("Hash do bloco inválido");
+            return false;
+        }
+
+        // Valida encadeamento
+        Bloco ultimoBloco = obterUltimoBloco();
+        if (!bloco.getHashAnterior().equals(ultimoBloco.getHash())) {
+            System.err.println("Hash anterior não corresponde");
+            return false;
+        }
+
+        // Valida índice
+        if (bloco.getIndice() != cadeia.size()) {
+            System.err.println("Índice do bloco inválido. Esperado: " + cadeia.size() +
+                    ", Recebido: " + bloco.getIndice());
+            return false;
+        }
+
+        // Valida proof of work (começa com zeros)
+        String alvo = new String(new char[dificuldade]).replace('\0', '0');
+        if (!bloco.getHash().substring(0, dificuldade).equals(alvo)) {
+            System.err.println("Proof of Work inválido");
+            return false;
+        }
+
+        return true;
+    }
+
+    public synchronized boolean validarCadeia() {
+        for (int i = 1; i < cadeia.size(); i++) {
+            Bloco blocoAtual = cadeia.get(i);
+            Bloco blocoAnterior = cadeia.get(i - 1);
+
+            if (!blocoAtual.getHash().equals(blocoAtual.calcularHash())) {
+                System.out.println("Hash inválido no bloco " + i);
+                return false;
+            }
+
+            if (!blocoAtual.getHashAnterior().equals(blocoAnterior.getHash())) {
+                System.out.println("Encadeamento inválido no bloco " + i);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // ==================== SINCRONIZAÇÃO ====================
+
+    public synchronized List<Bloco> getBlocos() {
+        return new ArrayList<>(cadeia);
+    }
+
+    public synchronized void substituir(List<Bloco> novasCadeias) {
+        if (novasCadeias == null || novasCadeias.isEmpty()) {
+            System.err.println("Cadeia remota inválida (nula ou vazia)");
+            return;
+        }
+
+        // Valida a nova cadeia
+        BlockchainGovernamental tempBlockchain = new BlockchainGovernamental(dificuldade, transacoesMaximasPorBloco);
+        tempBlockchain.cadeia.clear();
+
+        for (Bloco bloco : novasCadeias) {
+            if (!tempBlockchain.validarBloco(bloco)) {
+                System.err.println("Cadeia remota inválida, rejeitando");
+                return;
+            }
+            tempBlockchain.cadeia.add(bloco);
+        }
+
+        // Se chegou aqui, a cadeia remota é válida
+        this.cadeia = new ArrayList<>(novasCadeias);
+        this.transacoesPendentes.clear();
+        reconstruirIndices();
+
+        System.out.println("Blockchain substituída com sucesso. Novo tamanho: " + cadeia.size());
+    }
+
+    // ==================== ATUALIZAÇÃO DE ÍNDICES ====================
+
+    private void atualizarIndices(Bloco bloco) {
+        for (Transacao t : bloco.getTransacoes()) {
+            if (t == null) continue;
+
+            switch (t.getTipo()) {
+                case CADASTRO_ADMIN:
+                    Administrador admin = (Administrador) t.getDados();
+                    if (admin != null) {
+                        admins.put(admin.getId(), admin);
+                    }
+                    break;
+
+                case CADASTRO_ELEITOR:
+                    Eleitor eleitor = (Eleitor) t.getDados();
+                    if (eleitor != null) {
+                        eleitores.put(eleitor.getTituloDeEleitor(), eleitor);
+                    }
+                    break;
+
+                case CADASTRO_CANDIDATO:
+                    Candidato candidato = (Candidato) t.getDados();
+                    if (candidato != null) {
+                        candidatos.put(candidato.getNumero(), candidato);
+                    }
+                    break;
+
+                case CRIACAO_ELEICAO:
+                case INICIO_ELEICAO:
+                case FIM_ELEICAO:
+                    Eleicao eleicao = (Eleicao) t.getDados();
+                    if (eleicao != null) {
+                        eleicoes.put(eleicao.getId(), eleicao);
+                    }
+                    break;
+
+                case VOTO:
+                    // Processamento de voto se necessário
+                    break;
+
+                default:
+                    break;
+            }
+        }
+    }
+
+    public synchronized void reconstruirIndices() {
+        admins.clear();
+        eleitores.clear();
+        candidatos.clear();
+        eleicoes.clear();
+        votosRegistrados.clear();
+        resultados.clear();
+
+        System.out.println("Reconstruindo índices...");
+
+        for (int i = 1; i < cadeia.size(); i++) {
+            atualizarIndices(cadeia.get(i));
+        }
+
+        System.out.println("Índices reconstruídos: " +
+                admins.size() + " admins, " +
+                eleitores.size() + " eleitores, " +
+                candidatos.size() + " candidatos, " +
+                eleicoes.size() + " eleições");
+    }
+
+    // ==================== GETTERS ====================
+
+    public synchronized int getTamanho() {
+        return cadeia.size();
+    }
+
+    public synchronized Bloco obterUltimoBloco() {
+        return cadeia.get(cadeia.size() - 1);
+    }
+
+    public int getDificuldade() {
+        return dificuldade;
+    }
+
+    public synchronized int getTotalTransacoes() {
+        int total = 0;
+        for (int i = 1; i < cadeia.size(); i++) {
+            total += cadeia.get(i).getTransacoes().size();
+        }
+        return total;
+    }
+
+    // ==================== CONSULTAS AOS ÍNDICES ====================
+
+    public synchronized Administrador buscarAdmin(String id) {
+        return admins.get(id);
+    }
+
+    public synchronized Eleitor buscarEleitor(String titulo) {
+        return eleitores.get(titulo);
+    }
+
+    public synchronized Candidato buscarCandidato(String numero) {
+        return candidatos.get(numero);
+    }
+
+    public synchronized Eleicao buscarEleicao(String id) {
+        return eleicoes.get(id);
+    }
+
+    public synchronized List<Administrador> listarAdmins() {
+        return new ArrayList<>(admins.values());
+    }
+
+    public synchronized List<Eleitor> listarEleitores() {
+        return new ArrayList<>(eleitores.values());
+    }
+
+    public synchronized List<Candidato> listarCandidatos() {
+        return new ArrayList<>(candidatos.values());
+    }
+
+    public synchronized List<Eleicao> listarEleicoes() {
+        return new ArrayList<>(eleicoes.values());
+    }
+
+    public static String gerarIdUnico(String idAdmin, TipoTransacao tipo, Object dados, long timestamp) {
+        String dadosString = dados == null ? "" : dados.toString();
+        return idAdmin + tipo + dadosString + timestamp;
+    }
+
+    // ==================== STATUS ====================
+
+    public String getStatus() {
+        return "Tamanho: " + cadeia.size() +
+                " | Pool: " + transacoesPendentes.size() +
+                " | Total Transações: " + getTotalTransacoes();
+    }
+
+    @Override
+    public String toString() {
+        return "BlockchainGovernamental{" +
+                "tamanho=" + cadeia.size() +
+                ", poolSize=" + transacoesPendentes.size() +
+                ", dificuldade=" + dificuldade +
+                '}';
     }
 }
