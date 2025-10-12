@@ -50,14 +50,14 @@ public class Minerador implements Runnable {
         return true;
     }
 
-    private void minerarBloco() {
+    private synchronized void minerarBloco() {
         int tamanhoBlockchain = no.getBlockchain().getTamanho();
         int poolSize = no.getBlockchain().getPoolSize();
 
         System.out.println("[" + no.getId() + "] Iniciando mineração (blockchain: " +
                 tamanhoBlockchain + " blocos, pool: " + poolSize + " transações)");
 
-        Bloco bloco = no.getBlockchain().criarBlocoCandidato();
+        Bloco bloco = no.getBlockchain().criarBlocoCandidato(no.getId());
         if (bloco == null) {
             System.out.println("[" + no.getId() + "] Pool vazio, cancelando mineração");
             minerando = false;

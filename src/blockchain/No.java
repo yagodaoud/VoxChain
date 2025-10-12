@@ -12,11 +12,11 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class No {
-    private String id;
-    private String enderecoIP;
-    private int porta;
-    private BlockchainGovernamental blockchain;
-    private List<Peer> peers;
+    private final String id;
+    private final String enderecoIP;
+    private final int porta;
+    private final BlockchainGovernamental blockchain;
+    private final List<Peer> peers;
     private ServerSocket servidor;
     private volatile boolean rodando = false;
     private Thread threadServidorAceitar;
@@ -35,7 +35,6 @@ public class No {
     public void iniciar() {
         rodando = true;
 
-        // Inicia servidor
         try {
             servidor = new ServerSocket(porta);
             System.out.println("[" + id + "] Servidor iniciado em " + enderecoIP + ":" + porta);
@@ -44,12 +43,12 @@ public class No {
             return;
         }
 
-        // Thread para aceitar conexões
+        // Thread que aceita conexões remotas
         threadServidorAceitar = new Thread(this::aceitarConexoes);
         threadServidorAceitar.setName("Servidor-" + id);
         threadServidorAceitar.start();
 
-        // Inicia minerador
+        // Inicia minerador (agora com o ID do nó)
         minerador = new Minerador(this);
         Thread threadMinerador = new Thread(minerador);
         threadMinerador.setName("Minerador-" + id);
@@ -58,15 +57,12 @@ public class No {
 
     public void parar() {
         rodando = false;
-        minerador.parar();
-        for (Peer p : peers) {
-            p.desconectar();
-        }
+        if (minerador != null) minerador.parar();
+        for (Peer p : peers) p.desconectar();
+
         try {
             if (servidor != null) servidor.close();
-        } catch (IOException e) {
-            // ignored
-        }
+        } catch (IOException ignored) {}
     }
 
     // ============ CONEXÃO COM PEERS ============
@@ -74,7 +70,7 @@ public class No {
     public void conectarPeer(String ipRemoto, int portaRemota, String idRemoto) {
         new Thread(() -> {
             try {
-                System.out.println("[" + id + "] Tentando conectar em " + idRemoto);
+                System.out.println("[" + id + "] Tentando conectar em " + idRemoto + " (" + ipRemoto + ":" + portaRemota + ")");
                 Socket socket = new Socket(ipRemoto, portaRemota);
                 Peer peer = new Peer(idRemoto, socket, this);
                 peers.add(peer);
@@ -82,11 +78,11 @@ public class No {
                 new Thread(peer).start();
                 System.out.println("[" + id + "] ✓ Conectado a " + idRemoto);
 
-                // Requisita blockchain do peer
+                // Solicita blockchain atualizada
                 peer.enviar(new MensagemP2P(TipoMensagem.REQUISITAR_BLOCKCHAIN, null, this.id));
 
             } catch (IOException e) {
-                System.err.println("[" + id + "] Erro ao conectar em " + idRemoto + ": " + e.getMessage());
+                System.err.println("[" + id + "] ✗ Erro ao conectar em " + idRemoto + ": " + e.getMessage());
             }
         }).start();
     }
@@ -95,18 +91,15 @@ public class No {
         while (rodando) {
             try {
                 Socket socketCliente = servidor.accept();
-                System.out.println("[" + id + "] Conexão recebida");
+                System.out.println("[" + id + "] Nova conexão recebida");
 
-                // Cria peer para essa conexão
                 Peer peer = new Peer("Remoto-" + System.nanoTime(), socketCliente, this);
                 peers.add(peer);
-
                 new Thread(peer).start();
 
             } catch (IOException e) {
-                if (rodando) {
+                if (rodando)
                     System.err.println("[" + id + "] Erro ao aceitar conexão: " + e.getMessage());
-                }
             }
         }
     }
@@ -114,30 +107,22 @@ public class No {
     // ============ BROADCAST ============
 
     public void broadcastTransacao(Transacao t) {
-        MensagemP2P msg = new MensagemP2P(TipoMensagem.NOVA_TRANSACAO, t, this.id);
-        for (Peer peer : peers) {
-            if (peer.isConectado()) {
-                peer.enviar(msg);
-            }
-        }
+        MensagemP2P msg = new MensagemP2P(TipoMensagem.NOVA_TRANSACAO, t, id);
+        for (Peer peer : peers)
+            if (peer.isConectado()) peer.enviar(msg);
     }
 
     public void rebroadcastTransacao(Transacao t, String peerOrigem) {
-        MensagemP2P msg = new MensagemP2P(TipoMensagem.NOVA_TRANSACAO, t, this.id);
-        for (Peer peer : peers) {
-            if (peer.isConectado() && !peer.getId().equals(peerOrigem)) {
+        MensagemP2P msg = new MensagemP2P(TipoMensagem.NOVA_TRANSACAO, t, id);
+        for (Peer peer : peers)
+            if (peer.isConectado() && !peer.getId().equals(peerOrigem))
                 peer.enviar(msg);
-            }
-        }
     }
 
     public void broadcastBloco(Bloco b) {
-        MensagemP2P msg = new MensagemP2P(TipoMensagem.NOVO_BLOCO, b, this.id);
-        for (Peer peer : peers) {
-            if (peer.isConectado()) {
-                peer.enviar(msg);
-            }
-        }
+        MensagemP2P msg = new MensagemP2P(TipoMensagem.NOVO_BLOCO, b, id);
+        for (Peer peer : peers)
+            if (peer.isConectado()) peer.enviar(msg);
     }
 
     // ============ PROCESSAMENTO DE BLOCOS ============
@@ -151,73 +136,52 @@ public class No {
         int meuTamanho = blockchain.getTamanho();
         int blocoIndice = blocoRecebido.getIndice();
 
-        System.out.println("[" + id + "] Recebendo bloco " + blocoIndice +
+        System.out.println("[" + id + "] Recebeu bloco " + blocoIndice +
+                " de " + blocoRecebido.getMineradoPor() +
                 " (meu tamanho: " + meuTamanho + ")");
 
         if (blocoIndice == meuTamanho) {
-            // ========== BLOCO SEQUENCIAL ==========
-            System.out.println("[" + id + "] Bloco sequencial recebido (esperado)");
-
+            // BLOCO CORRETO SEQUENCIAL
             if (blockchain.validarBloco(blocoRecebido)) {
-                System.out.println("[" + id + "] ✓ Bloco válido adicionado: " + blocoIndice);
-
                 blockchain.adicionarBloco(blocoRecebido);
-                minerador.parar(); // Para mineração (já temos novo bloco)
                 blockchain.limparTransacoesProcessadas(blocoRecebido);
+                minerador.parar();
 
-                // Rebroadcast para outros nós (exceto quem enviou)
+                // Rebroadcast
                 rebroadcastBloco(blocoRecebido, peerOrigem);
-
-                System.out.println("[" + id + "] Tamanho blockchain agora: " + blockchain.getTamanho());
+                System.out.println("[" + id + "] ✓ Bloco " + blocoIndice + " adicionado com sucesso");
             } else {
                 System.out.println("[" + id + "] ✗ Bloco inválido rejeitado");
-                // Pode indicar fork ou ataque - não faz nada, espera novo bloco
             }
 
         } else if (blocoIndice > meuTamanho) {
-            // ========== BLOCKCHAIN DESATUALIZADA ==========
-            int diferenca = blocoIndice - meuTamanho;
-            System.out.println("[" + id + "] ⚠ Blockchain desatualizada (" + diferenca +
-                    " blocos atrás), sincronizando...");
-
-            // Requisita blockchain completa
+            // DESATUALIZADO
+            System.out.println("[" + id + "] ⚠ Blockchain desatualizada, solicitando sincronização...");
             for (Peer peer : peers) {
                 if (peer.getId().equals(peerOrigem) && peer.isConectado()) {
-                    peer.enviar(new MensagemP2P(TipoMensagem.REQUISITAR_BLOCKCHAIN, null, this.id));
-                    System.out.println("[" + id + "] Requisição de blockchain enviada para " + peerOrigem);
+                    peer.enviar(new MensagemP2P(TipoMensagem.REQUISITAR_BLOCKCHAIN, null, id));
                     break;
                 }
             }
 
-        } else if (blocoIndice < meuTamanho) {
-            // ========== BLOCO ANTIGO (FORK) ==========
-            System.out.println("[" + id + "] ⚠ Bloco mais antigo recebido (possível fork)");
-            System.out.println("[" + id + "]   Bloco: " + blocoIndice + ", Meu tamanho: " + meuTamanho);
-
-            // Se for apenas 1 bloco atrás, pode ser fork - ignora silenciosamente
-            // Se for muito atrás, ignora (já tem a cadeia correta)
-
-            if (meuTamanho - blocoIndice <= 2) {
-                System.out.println("[" + id + "] Fork detectado, mantendo minha cadeia (maior)");
-            }
+        } else {
+            // BLOCO ANTIGO (fork)
+            System.out.println("[" + id + "] ⚠ Bloco antigo recebido (fork detectado). Mantendo minha cadeia.");
         }
     }
 
     private void rebroadcastBloco(Bloco b, String peerOrigem) {
-        MensagemP2P msg = new MensagemP2P(TipoMensagem.NOVO_BLOCO, b, this.id);
-        for (Peer peer : peers) {
-            if (peer.isConectado() && !peer.getId().equals(peerOrigem)) {
+        MensagemP2P msg = new MensagemP2P(TipoMensagem.NOVO_BLOCO, b, id);
+        for (Peer peer : peers)
+            if (peer.isConectado() && !peer.getId().equals(peerOrigem))
                 peer.enviar(msg);
-            }
-        }
     }
 
     public synchronized void sincronizarBlockchain(List<Bloco> blocoRemoto) {
         if (blocoRemoto == null) return;
-
         if (blocoRemoto.size() > blockchain.getTamanho()) {
-            System.out.println("[" + id + "] Atualizando blockchain (tamanho remoto: " +
-                    blocoRemoto.size() + ")");
+            System.out.println("[" + id + "] 🔄 Substituindo blockchain local por versão mais longa (" +
+                    blocoRemoto.size() + " blocos)");
             blockchain.substituir(blocoRemoto);
             minerador.parar();
         }
@@ -242,9 +206,8 @@ public class No {
     public int getNumPeers() { return peers.size(); }
 
     public String getStatus() {
-        return "Id: " + id +
-                " | Tamanho blockchain: " + blockchain.getTamanho() +
-                " | Transações pendentes: " + blockchain.getPoolSize() +
+        return "[" + id + "] Blockchain: " + blockchain.getTamanho() +
+                " blocos | Pool: " + blockchain.getPoolSize() +
                 " | Peers: " + peers.size();
     }
 }

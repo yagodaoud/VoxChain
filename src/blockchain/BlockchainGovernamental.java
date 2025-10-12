@@ -8,6 +8,7 @@ import java.util.*;
 
 public class BlockchainGovernamental implements Serializable {
     private static final long serialVersionUID = 1L;
+    private static BlockchainGovernamental instance;
 
     private List<Bloco> cadeia;
     private List<Transacao> transacoesPendentes;
@@ -92,7 +93,7 @@ public class BlockchainGovernamental implements Serializable {
 
     // ==================== CRIAÇÃO E MINERAÇÃO DE BLOCOS ====================
 
-    public synchronized Bloco criarBlocoCandidato() {
+    public synchronized Bloco criarBlocoCandidato(String mineradoPor) {
         if (transacoesPendentes.isEmpty()) {
             return null;
         }
@@ -108,7 +109,7 @@ public class BlockchainGovernamental implements Serializable {
                 cadeia.size(),
                 transacoesBloco,
                 obterUltimoBloco().getHash(),
-                "MINERADOR"
+                mineradoPor
         );
 
         return novoBloco;
@@ -341,9 +342,43 @@ public class BlockchainGovernamental implements Serializable {
         return new ArrayList<>(eleicoes.values());
     }
 
+    public synchronized Bloco getBloco(int index) {
+        return cadeia.get(index);
+    }
+
+    public synchronized Voto buscarVotoPorHash(String hash) {
+        for (Bloco bloco : cadeia) {
+            for (Transacao t : bloco.getTransacoes()) {
+                if (t.getTipo().equals(TipoTransacao.VOTO) && t.getPayload() instanceof Voto) {
+                    Voto voto = t.getPayloadAs(Voto.class);
+                    if (voto.getIdEleitorHash().equals(hash)) {
+                        return voto;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     public static String gerarIdUnico(String idAdmin, TipoTransacao tipo, Object dados, long timestamp) {
         String dadosString = dados == null ? "" : dados.toString();
         return idAdmin + tipo + dadosString + timestamp;
+    }
+
+    public static BlockchainGovernamental getInstance(int dificuldade, int transacoesMaximasPorBloco) {
+        if (instance == null) {
+            return new BlockchainGovernamental(dificuldade, transacoesMaximasPorBloco);
+        }
+
+        return instance;
+    }
+
+    public static BlockchainGovernamental getInstance() {
+        if (instance == null) {
+            return new BlockchainGovernamental();
+        }
+
+        return instance;
     }
 
     // ==================== STATUS ====================
