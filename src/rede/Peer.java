@@ -1,8 +1,12 @@
 package rede;
 
-import modelo.Transacao;
 import blockchain.Bloco;
-import java.io.*;
+import modelo.Transacao;
+
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 public class Peer implements Runnable {

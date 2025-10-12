@@ -1,19 +1,10 @@
 package blockchain;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import modelo.Administrador;
-import modelo.Candidato;
-import modelo.Eleicao;
-import modelo.Eleitor;
-import modelo.Transacao;
+import modelo.*;
 import modelo.enums.TipoTransacao;
+
+import java.io.Serializable;
+import java.util.*;
 
 public class BlockchainGovernamental implements Serializable {
     private static final long serialVersionUID = 1L;

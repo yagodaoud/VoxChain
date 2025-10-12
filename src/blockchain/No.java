@@ -5,10 +5,10 @@ import rede.MensagemP2P;
 import rede.Peer;
 import rede.TipoMensagem;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.*;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class No {

@@ -1,10 +1,10 @@
 package modelo;
 
-import java.io.Serializable;
-import java.time.Instant;
-
 import blockchain.BlockchainGovernamental;
 import modelo.enums.TipoTransacao;
+
+import java.io.Serializable;
+import java.time.Instant;
 
 public class Transacao implements Serializable {
     private String id;

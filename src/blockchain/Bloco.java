@@ -1,12 +1,12 @@
 package blockchain;
 
+import modelo.Transacao;
+
 import java.io.Serializable;
 import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-
-import modelo.Transacao;
 
 public class Bloco implements Serializable {
     private static final long serialVersionUID = 1L;
