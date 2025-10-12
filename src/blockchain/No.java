@@ -121,9 +121,20 @@ public class No {
     // ============ BROADCAST ============
 
     public void broadcastTransacao(Transacao t) {
+        if (t == null) return;
+
         MensagemP2P msg = new MensagemP2P(TipoMensagem.NOVA_TRANSACAO, t, id);
-        for (Peer peer : peers)
-            if (peer.isConectado()) peer.enviar(msg);
+        int enviadas = 0;
+
+        for (Peer peer : peers) {
+            if (peer.isConectado() && !peer.getId().equals(id)) {
+                peer.enviar(msg);
+                enviadas++;
+            }
+        }
+
+        System.out.println("[" + id + "] Broadcast de transação " + t.getId() +
+                " enviado para " + enviadas + " peers");
     }
 
     public void rebroadcastTransacao(Transacao t, String peerOrigem) {
@@ -134,9 +145,20 @@ public class No {
     }
 
     public void broadcastBloco(Bloco b) {
+        if (b == null) return;
+
         MensagemP2P msg = new MensagemP2P(TipoMensagem.NOVO_BLOCO, b, id);
-        for (Peer peer : peers)
-            if (peer.isConectado()) peer.enviar(msg);
+        int enviados = 0;
+
+        for (Peer peer : peers) {
+            if (peer.isConectado() && !peer.getId().equals(id)) {
+                peer.enviar(msg);
+                enviados++;
+            }
+        }
+
+        System.out.println("[" + id + "] Broadcast de bloco " + b.getIndice() +
+                " enviado para " + enviados + " peers");
     }
 
     // ============ PROCESSAMENTO DE BLOCOS ============
@@ -204,8 +226,17 @@ public class No {
     // ============ OPERAÇÕES ============
 
     public void adicionarTransacao(Transacao t) {
+        if (t == null) return;
+
+        // Tenta adicionar ao pool
         if (blockchain.adicionarAoPool(t)) {
+            System.out.println("[" + id + "] ✓ Transação adicionada ao pool: " + t.getId());
+
+            // Não precisa de rebroadcast porque é a primeira transmissão
             broadcastTransacao(t);
+
+        } else {
+            System.out.println("[" + id + "] ⚠ Transação rejeitada (já existe): " + t.getId());
         }
     }
 

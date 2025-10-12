@@ -1,6 +1,7 @@
 package rede;
 
 import blockchain.Bloco;
+import blockchain.TransacaoTracker;
 import modelo.Transacao;
 
 import java.io.EOFException;
@@ -23,7 +24,6 @@ public class Peer implements Runnable {
         this.noLocal = noLocal;
         this.conectado = true;
 
-        // Importante: criar output ANTES do input!
         this.output = new ObjectOutputStream(socket.getOutputStream());
         this.output.flush();
         this.input = new ObjectInputStream(socket.getInputStream());
@@ -66,9 +66,18 @@ public class Peer implements Runnable {
         switch (msg.getTipo()) {
             case NOVA_TRANSACAO:
                 Transacao t = (Transacao) msg.getPayload();
+                System.out.println("[DEBUG] NOVA_TRANSACAO recebida. ID: " + t.getId() +
+                        " | Remetente: " + msg.getRemetente() +
+                        " | Origem: " + this.id);
+
                 if (!noLocal.getBlockchain().transacaoExiste(t)) {
+                    System.out.println("[DEBUG] Transação NÃO existe no blockchain. Adicionando ao pool...");
                     noLocal.getBlockchain().adicionarAoPool(t);
-                    noLocal.rebroadcastTransacao(t, this.id);
+                    TransacaoTracker.rastrearAdicao(noLocal.getId(), t, this.id);
+                    System.out.println("[" + noLocal.getId() + "] ✓ Transação adicionada ao pool: " + t.getId());
+                } else {
+                    System.out.println("[DEBUG] Transação JÁ existe. Rejeitando.");
+                    TransacaoTracker.rastrearAdicao(noLocal.getId(), t, "DUPLICATA-" + this.id);
                 }
                 break;
 
@@ -93,31 +102,22 @@ public class Peer implements Runnable {
 
             case PONG:
                 System.out.println("[" + noLocal.getId() + "] 📍 PONG recebido de " + msg.getRemetente());
-                // Peer está vivo
                 break;
 
-            // ★ NOVO: Tratamento de LISTAR_PEERS
             case LISTAR_PEERS:
-                System.out.println("[" + noLocal.getId() + "] 📋 Peer " + id +
-                        " pediu lista de peers");
-                java.util.List<rede.PeerDiscovery.PeerInfo> catalogo =
-                        noLocal.obterCatalogoPeers();
-                enviar(new MensagemP2P(TipoMensagem.RESPOSTA_PEERS, catalogo,
-                        noLocal.getId()));
+                System.out.println("[" + noLocal.getId() + "] 📋 Peer " + id + " pediu lista de peers");
+                java.util.List<rede.PeerDiscovery.PeerInfo> catalogo = noLocal.obterCatalogoPeers();
+                enviar(new MensagemP2P(TipoMensagem.RESPOSTA_PEERS, catalogo, noLocal.getId()));
                 break;
 
-            // ★ NOVO: Tratamento de RESPOSTA_PEERS
             case RESPOSTA_PEERS:
-                System.out.println("[" + noLocal.getId() + "] 📋 Recebeu lista de peers de " +
-                        msg.getRemetente());
-                java.util.List<rede.PeerDiscovery.PeerInfo> novosCatalogo =
-                        (java.util.List) msg.getPayload();
+                System.out.println("[" + noLocal.getId() + "] 📋 Recebeu lista de peers de " + msg.getRemetente());
+                java.util.List<rede.PeerDiscovery.PeerInfo> novosCatalogo = (java.util.List) msg.getPayload();
                 noLocal.atualizarCatalogoPeers(novosCatalogo);
                 break;
 
             default:
-                System.out.println("[" + noLocal.getId() + "] ⚠ Tipo de mensagem desconhecido: " +
-                        msg.getTipo());
+                System.out.println("[" + noLocal.getId() + "] ⚠ Tipo de mensagem desconhecido: " + msg.getTipo());
         }
     }
 

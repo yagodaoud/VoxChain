@@ -70,16 +70,40 @@ public class BlockchainGovernamental implements Serializable {
     }
 
     public synchronized boolean transacaoExiste(Transacao t) {
-        if (t == null) return false;
+        if (t == null || t.getId() == null) {
+            System.out.println("[DEBUG-EXISTE] Transação nula ou sem ID!");
+            return false;
+        }
 
-        // Verifica em todos os blocos
+        String idTransacao = t.getId();
+        System.out.println("[DEBUG-EXISTE] Verificando se existe: " + idTransacao);
+        System.out.println("[DEBUG-EXISTE]   Pool size: " + transacoesPendentes.size());
+
+        // Verifica em TODOS os blocos
         for (Bloco bloco : cadeia) {
             for (Transacao tx : bloco.getTransacoes()) {
-                if (tx.getId() != null && tx.getId().equals(t.getId())) {
+                if (tx != null && tx.getId() != null) {
+                    System.out.println("[DEBUG-EXISTE]   Bloco [" + bloco.getIndice() + "]: " + tx.getId());
+                    if (idTransacao.equals(tx.getId())) {
+                        System.out.println("[DEBUG-EXISTE] ✓ ENCONTRADA no bloco " + bloco.getIndice());
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // Também verifica NO POOL
+        for (Transacao tx : transacoesPendentes) {
+            if (tx != null && tx.getId() != null) {
+                System.out.println("[DEBUG-EXISTE]   Pool: " + tx.getId());
+                if (idTransacao.equals(tx.getId())) {
+                    System.out.println("[DEBUG-EXISTE] ✓ ENCONTRADA no pool");
                     return true;
                 }
             }
         }
+
+        System.out.println("[DEBUG-EXISTE] ✗ NÃO ENCONTRADA");
         return false;
     }
 

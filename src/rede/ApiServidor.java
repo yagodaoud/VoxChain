@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
 import modelo.Transacao;
+import modelo.enums.TipoTransacao;
 
 import static spark.Spark.*;
 
@@ -49,10 +50,56 @@ public class ApiServidor {
         });
 
         post("/transacao", (req, res) -> {
-            Transacao t = gson.fromJson(req.body(), Transacao.class);
-            no.adicionarTransacao(t);
-            res.status(201);
-            return "Transação recebida e broadcast iniciada";
+            try {
+                // Parse do JSON recebido
+                JsonObject json = gson.fromJson(req.body(), JsonObject.class);
+
+                String tipoStr = json.get("tipo").getAsString();
+                TipoTransacao tipo = TipoTransacao.valueOf(tipoStr);
+
+                // O payload vem como string JSON
+                String payloadStr = json.get("payload").getAsString();
+
+                String idOrigem = json.get("idOrigem").getAsString();
+
+                System.out.println("[API] Recebeu POST /transacao");
+                System.out.println("[API]   - Tipo: " + tipo);
+                System.out.println("[API]   - Origem: " + idOrigem);
+                System.out.println("[API]   - Payload: " + payloadStr);
+
+                // Criar transação com construtor correto
+                // Nota: O ID será gerado automaticamente pelo construtor
+                Transacao t = new Transacao(tipo, payloadStr, idOrigem);
+
+                System.out.println("[API]   - ID Gerado: " + t.getId());
+
+                // Adicionar ao nó
+                no.adicionarTransacao(t);
+
+                res.status(201);
+                res.type("application/json");
+
+                JsonObject response = new JsonObject();
+                response.addProperty("status", "success");
+                response.addProperty("id", t.getId());
+                response.addProperty("tipo", tipo.toString());
+                response.addProperty("timestamp", t.getTimestamp());
+
+                return response.toString();
+
+            } catch (Exception e) {
+                System.err.println("[API] Erro ao processar transação: " + e.getMessage());
+                e.printStackTrace();
+
+                res.status(400);
+                res.type("application/json");
+
+                JsonObject error = new JsonObject();
+                error.addProperty("status", "error");
+                error.addProperty("message", e.getMessage());
+
+                return error.toString();
+            }
         });
 
         get("/rede/status", (req, res) -> {
