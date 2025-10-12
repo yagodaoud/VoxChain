@@ -87,8 +87,37 @@ public class Peer implements Runnable {
                 break;
 
             case PING:
+                System.out.println("[" + noLocal.getId() + "] 📍 PING recebido de " + msg.getRemetente());
                 enviar(new MensagemP2P(TipoMensagem.PONG, null, noLocal.getId()));
                 break;
+
+            case PONG:
+                System.out.println("[" + noLocal.getId() + "] 📍 PONG recebido de " + msg.getRemetente());
+                // Peer está vivo
+                break;
+
+            // ★ NOVO: Tratamento de LISTAR_PEERS
+            case LISTAR_PEERS:
+                System.out.println("[" + noLocal.getId() + "] 📋 Peer " + id +
+                        " pediu lista de peers");
+                java.util.List<rede.PeerDiscovery.PeerInfo> catalogo =
+                        noLocal.obterCatalogoPeers();
+                enviar(new MensagemP2P(TipoMensagem.RESPOSTA_PEERS, catalogo,
+                        noLocal.getId()));
+                break;
+
+            // ★ NOVO: Tratamento de RESPOSTA_PEERS
+            case RESPOSTA_PEERS:
+                System.out.println("[" + noLocal.getId() + "] 📋 Recebeu lista de peers de " +
+                        msg.getRemetente());
+                java.util.List<rede.PeerDiscovery.PeerInfo> novosCatalogo =
+                        (java.util.List) msg.getPayload();
+                noLocal.atualizarCatalogoPeers(novosCatalogo);
+                break;
+
+            default:
+                System.out.println("[" + noLocal.getId() + "] ⚠ Tipo de mensagem desconhecido: " +
+                        msg.getTipo());
         }
     }
 

@@ -1,8 +1,10 @@
 package blockchain;
 
+import config.ConfigManager;
 import modelo.Transacao;
 import rede.MensagemP2P;
 import rede.Peer;
+import rede.PeerDiscovery;
 import rede.TipoMensagem;
 
 import java.io.IOException;
@@ -21,6 +23,7 @@ public class No {
     private volatile boolean rodando = false;
     private Thread threadServidorAceitar;
     private Minerador minerador;
+    private PeerDiscovery peerDiscovery;
 
     public No(String id, String ip, int porta) {
         this.id = id;
@@ -48,7 +51,17 @@ public class No {
         threadServidorAceitar.setName("Servidor-" + id);
         threadServidorAceitar.start();
 
-        // Inicia minerador (agora com o ID do nó)
+        // ★ NOVO: Inicializar PeerDiscovery
+        peerDiscovery = new PeerDiscovery(this);
+        List<PeerDiscovery.PeerInfo> bootstrapNodes = ConfigManager.obterBootstrapNodes();
+
+        // Remove a si mesmo da lista de bootstrap
+        bootstrapNodes.removeIf(p -> p.id.equals(this.id));
+
+        peerDiscovery.iniciar(bootstrapNodes);
+        System.out.println("[" + id + "] PeerDiscovery ativado");
+
+        // Inicia minerador
         minerador = new Minerador(this);
         Thread threadMinerador = new Thread(minerador);
         threadMinerador.setName("Minerador-" + id);
@@ -58,6 +71,7 @@ public class No {
     public void parar() {
         rodando = false;
         if (minerador != null) minerador.parar();
+        if (peerDiscovery != null) peerDiscovery.parar();
         for (Peer p : peers) p.desconectar();
 
         try {
@@ -205,9 +219,26 @@ public class No {
     public BlockchainGovernamental getBlockchain() { return blockchain; }
     public int getNumPeers() { return peers.size(); }
 
+    public List<Peer> getPeers() {
+        return peers;
+    }
+
+    public List<PeerDiscovery.PeerInfo> obterCatalogoPeers() {
+        return peerDiscovery.getCatalogo();
+    }
+
+    public void atualizarCatalogoPeers(List<PeerDiscovery.PeerInfo> peers) {
+        if (peerDiscovery != null) {
+            peerDiscovery.atualizarCatalogo(peers);
+        }
+    }
+
     public String getStatus() {
+        String discovery = peerDiscovery != null ?
+                " | " + peerDiscovery.getStatusDiscovery() : "";
+
         return "[" + id + "] Blockchain: " + blockchain.getTamanho() +
                 " blocos | Pool: " + blockchain.getPoolSize() +
-                " | Peers: " + peers.size();
+                " | Peers: " + peers.size() + discovery;
     }
 }

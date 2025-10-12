@@ -6,5 +6,7 @@ public enum TipoMensagem {
     REQUISITAR_BLOCKCHAIN, // "Me manda tua blockchain"
     RESPOSTA_BLOCKCHAIN,  // "Aqui está"
     PING,                // Verificar se está vivo
-    PONG
+    PONG,
+    LISTAR_PEERS,
+    RESPOSTA_PEERS
 }
