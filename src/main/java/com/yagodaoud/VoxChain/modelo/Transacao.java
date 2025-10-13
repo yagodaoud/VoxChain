@@ -5,6 +5,7 @@ import com.yagodaoud.VoxChain.modelo.enums.TipoTransacao;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.UUID;
 
 public class Transacao implements Serializable {
     private static final Gson gson = new Gson();
@@ -32,7 +33,8 @@ public class Transacao implements Serializable {
 
     // ★ NOVO: ID simples e previsível
     private static String gerarIdUnico(String idOrigem, TipoTransacao tipo, long timestamp) {
-        return idOrigem + "-" + tipo.name() + "-" + timestamp;
+        String uuid = UUID.randomUUID().toString().substring(0, 8);
+        return idOrigem + "-" + tipo.name() + "-" + timestamp + "-" + uuid;
     }
 
     public void setId(String id) {
