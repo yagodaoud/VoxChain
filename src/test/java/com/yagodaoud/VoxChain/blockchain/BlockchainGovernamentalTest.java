@@ -93,7 +93,7 @@ class BlockchainGovernamentalTest {
         Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP");
 
         assertThat(bloco).isNotNull();
-//        assertThat(bloco.getTransacoes()).hasSize(2);
+        assertThat(bloco.getTransacoes()).hasSize(2);
         assertThat(bloco.getIndice()).isEqualTo(1);
     }
 
@@ -106,9 +106,10 @@ class BlockchainGovernamentalTest {
 
     @Test
     @DisplayName("Deve respeitar limite máximo de transações por bloco")
-    void deveRespeeitarLimiteTransacoesPorBloco() {
+    void deveRespeeitarLimiteTransacoesPorBloco() throws InterruptedException {
         // Adiciona 8 transações (limite é 5)
         for (int i = 0; i < 8; i++) {
+            Thread.sleep(100);
             Transacao t = new Transacao(TipoTransacao.VOTO,
                     "{\"idEleitor\":\"" + i + "\"}", "TSE-SP");
             blockchain.adicionarAoPool(t);
@@ -116,7 +117,7 @@ class BlockchainGovernamentalTest {
 
         Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP");
 
-//        assertThat(bloco.getTransacoes()).hasSize(5);
+        assertThat(bloco.getTransacoes()).hasSize(5);
     }
 
     @Test
