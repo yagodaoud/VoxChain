@@ -27,24 +27,24 @@ public class ApiServidor {
         Gson gson = new Gson();
         port(porta);
 
-        get("/com/yagodaoud/VoxChain/blockchain", (req, res) -> {
+        get("/blockchain", (req, res) -> {
             res.type("application/json");
             return gson.toJson(no.getBlockchain().getBlocos());
         });
 
-        get("/com/yagodaoud/VoxChain/blockchain/bloco/:index", (req, res) -> {
+        get("/blockchain/bloco/:index", (req, res) -> {
             int index = Integer.parseInt(req.params("index"));
             res.type("application/json");
             return gson.toJson(no.getBlockchain().getBloco(index));
         });
 
-        get("/com/yagodaoud/VoxChain/blockchain/voto/:hash", (req, res) -> {
+        get("/blockchain/voto/:hash", (req, res) -> {
             String hash = req.params("hash");
             res.type("application/json");
             return gson.toJson(no.getBlockchain().buscarVotoPorHash(hash));
         });
 
-        get("/com/yagodaoud/VoxChain/blockchain/status", (req, res) -> {
+        get("/blockchain/status", (req, res) -> {
             res.type("application/json");
             return gson.toJson(no.getStatus());
         });
@@ -156,7 +156,7 @@ public class ApiServidor {
             return catalogo.toString();
         });
 
-        // Estatísticas da com.yagodaoud.VoxChain.rede
+        // Estatísticas da rede
         get("/rede/stats", (req, res) -> {
             res.type("application/json");
             JsonObject stats = new JsonObject();
