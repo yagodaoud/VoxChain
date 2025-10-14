@@ -11,6 +11,7 @@ import com.yagodaoud.VoxChain.rede.PeerDiscovery;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -217,21 +218,35 @@ class NoTest {
     @DisplayName("Deve sincronizar com blockchain mais longa")
     void deveSincronizarComBlockchainMaisLonga() {
         no.iniciar();
-        // Cria blockchain remota mais longa
-        List<Bloco> blocosRemotos = no.getBlockchain().getBlocos();
 
-        // Adiciona um bloco artificial
-        Bloco novoBloco = new Bloco(1, java.util.List.of(),
-                blocosRemotos.get(0).getHash(), "OUTRO-NO");
-        novoBloco.minerarBloco(2);
-        blocosRemotos.add(novoBloco);
+        // Pega o hash do primeiro bloco (gênesis) APÓS iniciar
+        List<Bloco> blocosLocais = no.getBlockchain().getBlocos();
+        String hashDoPrimeiroBloco = blocosLocais.get(0).getHash();
 
+        // Cria blockchain remota com mesmo gênesis
+        List<Bloco> blocosRemotos = new ArrayList<>(blocosLocais);
+
+        // Cria um novo bloco (índice 1) usando o hash do gênesis local
+        Bloco novoBloco1 = new Bloco(1, java.util.List.of(),
+                hashDoPrimeiroBloco, "OUTRO-NO");
+
+        // Minera o novo bloco
+        novoBloco1.minerarBloco(2);
+
+        // Adiciona à blockchain remota
+        blocosRemotos.add(novoBloco1);
+
+        // Verifica estado antes
         int tamanhoAntes = no.getBlockchain().getTamanho();
+        assertThat(tamanhoAntes).isEqualTo(1);
 
+        // Sincroniza com a blockchain remota mais longa
         no.sincronizarBlockchain(blocosRemotos);
 
+        // Verifica estado depois
         int tamanhoDepois = no.getBlockchain().getTamanho();
         assertThat(tamanhoDepois).isGreaterThan(tamanhoAntes);
+        assertThat(tamanhoDepois).isEqualTo(2);
     }
 
     @Test

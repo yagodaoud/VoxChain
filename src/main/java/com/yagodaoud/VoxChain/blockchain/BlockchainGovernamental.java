@@ -222,14 +222,10 @@ public class BlockchainGovernamental implements Serializable {
             return;
         }
 
-        BlockchainGovernamental tempBlockchain = new BlockchainGovernamental(dificuldade, transacoesMaximasPorBloco);
-
-        for (Bloco bloco : novasCadeias) {
-            if (!tempBlockchain.validarBloco(bloco)) {
-                System.err.println("Cadeia remota inválida, rejeitando");
-                return;
-            }
-            tempBlockchain.cadeia.add(bloco);
+        // Valida a nova cadeia SEM criar uma blockchain temporária
+        if (!validarCadeiaRemota(novasCadeias)) {
+            System.err.println("Cadeia remota inválida, rejeitando");
+            return;
         }
 
         // Se chegou aqui, a cadeia remota é válida
@@ -238,6 +234,59 @@ public class BlockchainGovernamental implements Serializable {
         reconstruirIndices();
 
         System.out.println("Blockchain substituída com sucesso. Novo tamanho: " + cadeia.size());
+    }
+
+    private synchronized boolean validarCadeiaRemota(List<Bloco> cadeiRemota) {
+        if (cadeiRemota == null || cadeiRemota.isEmpty()) {
+            return false;
+        }
+
+        // Valida o bloco gênesis (índice 0)
+        Bloco blocoGenesis = cadeiRemota.get(0);
+        if (blocoGenesis.getIndice() != 0) {
+            System.err.println("Primeiro bloco não é gênesis");
+            return false;
+        }
+
+        if (!blocoGenesis.getHashAnterior().equals("0")) {
+            System.err.println("Hash anterior do gênesis não é '0'");
+            return false;
+        }
+
+        // Valida encadeamento e hashes de todos os blocos
+        for (int i = 0; i < cadeiRemota.size(); i++) {
+            Bloco blocoAtual = cadeiRemota.get(i);
+
+            // Verifica índice
+            if (blocoAtual.getIndice() != i) {
+                System.err.println("Índice inválido no bloco " + i);
+                return false;
+            }
+
+            // Verifica hash
+            if (!blocoAtual.getHash().equals(blocoAtual.calcularHash())) {
+                System.err.println("Hash inválido no bloco " + i);
+                return false;
+            }
+
+            // Verifica encadeamento (a partir do segundo bloco)
+            if (i > 0) {
+                Bloco blocoAnterior = cadeiRemota.get(i - 1);
+                if (!blocoAtual.getHashAnterior().equals(blocoAnterior.getHash())) {
+                    System.err.println("Hash anterior não corresponde no bloco " + i);
+                    return false;
+                }
+            }
+
+            // Verifica proof of work
+            String alvo = "0".repeat(Math.max(0, dificuldade));
+            if (!blocoAtual.getHash().startsWith(alvo)) {
+                System.err.println("Proof of Work inválido no bloco " + i);
+                return false;
+            }
+        }
+
+        return true;
     }
 
     // ==================== ATUALIZAÇÃO DE ÍNDICES ====================
