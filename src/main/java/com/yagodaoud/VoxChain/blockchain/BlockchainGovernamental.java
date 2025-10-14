@@ -222,9 +222,7 @@ public class BlockchainGovernamental implements Serializable {
             return;
         }
 
-        // Valida a nova cadeia
         BlockchainGovernamental tempBlockchain = new BlockchainGovernamental(dificuldade, transacoesMaximasPorBloco);
-        tempBlockchain.cadeia.clear();
 
         for (Bloco bloco : novasCadeias) {
             if (!tempBlockchain.validarBloco(bloco)) {

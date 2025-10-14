@@ -9,21 +9,57 @@ import org.junit.jupiter.api.Timeout;
 import com.yagodaoud.VoxChain.rede.Peer;
 import com.yagodaoud.VoxChain.rede.PeerDiscovery;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.*;
 
 @DisplayName("Testes da Classe No (Nó da Rede)")
+
 class NoTest {
 
     private No no;
     private static final String ID_NO = "TSE-SP";
-    private static final int PORTA_NO = 9001;
+    private int portaNo;
+
+    private static final int PORTA_FIXA = 9001;
+    private static final int FAIXA_INICIAL = 1024;
+    private static final int FAIXA_FINAL = 65535;
+
+    // Método para tentar uma porta fixa ou encontrar uma disponível na faixa
+    private int getAvailablePort() throws IOException {
+        // Primeiro tenta a porta fixa
+        if (isPortAvailable(PORTA_FIXA)) {
+            return PORTA_FIXA;
+        }
+
+        // Se a porta fixa não estiver disponível, tenta um intervalo de portas
+        for (int port = FAIXA_INICIAL; port <= FAIXA_FINAL; port++) {
+            if (isPortAvailable(port)) {
+                return port;
+            }
+        }
+
+        throw new IOException("Não foi possível encontrar uma porta disponível.");
+    }
+
+    // Verifica se a porta está disponível
+    private boolean isPortAvailable(int port) {
+        try (ServerSocket socket = new ServerSocket(port)) {
+            socket.setReuseAddress(true);
+            return true;  // Se consegue criar o socket, a porta está disponível
+        } catch (IOException e) {
+            return false;  // A porta está em uso
+        }
+    }
 
     @BeforeEach
-    void setUp() {
-        no = new No(ID_NO, "localhost", PORTA_NO);
+    void setUp() throws IOException {
+        // Atribui uma porta aleatória antes de cada teste
+        portaNo = getAvailablePort();
+        no = new No(ID_NO, "localhost", portaNo);
     }
 
     // ============ TESTES DE CRIAÇÃO ============
@@ -130,6 +166,8 @@ class NoTest {
     @Test
     @DisplayName("Deve processar bloco válido")
     void deveProcessarBlocoValido() {
+        no.iniciar();
+
         // Cria e minera um bloco
         Transacao t = new Transacao(TipoTransacao.VOTO,
                 "{\"idEleitor\":\"123\"}", ID_NO);
@@ -178,6 +216,7 @@ class NoTest {
     @Test
     @DisplayName("Deve sincronizar com blockchain mais longa")
     void deveSincronizarComBlockchainMaisLonga() {
+        no.iniciar();
         // Cria blockchain remota mais longa
         List<Bloco> blocosRemotos = no.getBlockchain().getBlocos();
 
@@ -212,6 +251,8 @@ class NoTest {
     @Test
     @DisplayName("Deve obter catálogo de peers")
     void deveObterCatalogoDePeers() {
+        no.iniciar();
+
         List<PeerDiscovery.PeerInfo> catalogo = no.obterCatalogoPeers();
 
         assertThat(catalogo).isNotNull();
@@ -220,13 +261,16 @@ class NoTest {
     @Test
     @DisplayName("Deve atualizar catálogo de peers")
     void deveAtualizarCatalogoDePeers() {
-        PeerDiscovery.PeerInfo peerInfo = new PeerDiscovery.PeerInfo("TSE-MG", "localhost", 8002);
-        List<PeerDiscovery.PeerInfo> novosCatalogo = java.util.List.of(peerInfo);
+        no.iniciar();
+
+        PeerDiscovery.PeerInfo peerInfo2 = new PeerDiscovery.PeerInfo("TSE-RJ", "localhost", 8002);
+        PeerDiscovery.PeerInfo peerInfo = new PeerDiscovery.PeerInfo("TSE-MG", "localhost", 8003);
+        List<PeerDiscovery.PeerInfo> novosCatalogo = java.util.List.of(peerInfo, peerInfo2);
 
         no.atualizarCatalogoPeers(novosCatalogo);
 
         List<PeerDiscovery.PeerInfo> catalogoAtualizado = no.obterCatalogoPeers();
-        assertThat(catalogoAtualizado).contains(peerInfo);
+        assertThat(catalogoAtualizado).contains(peerInfo, peerInfo2);
     }
 
     // ============ TESTES DE PEERS ============
