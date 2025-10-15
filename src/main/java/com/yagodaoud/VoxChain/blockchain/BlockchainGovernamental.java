@@ -14,6 +14,7 @@ public class BlockchainGovernamental implements Serializable {
     private List<Transacao> transacoesPendentes;
     private int dificuldade;
     private int transacoesMaximasPorBloco;
+    private boolean modoTeste = false;
 
     // ÍNDICES PARA CONSULTA RÁPIDA (reconstruídos da blockchain)
     private Map<String, Administrador> admins;
@@ -66,6 +67,11 @@ public class BlockchainGovernamental implements Serializable {
         }
 
         transacoesPendentes.add(t);
+
+        if (modoTeste && temTransacoesPendentes()) {
+            minerarBlocoImediato();
+        }
+
         return true;
     }
 
@@ -151,6 +157,17 @@ public class BlockchainGovernamental implements Serializable {
 
         for (Transacao t : bloco.getTransacoes()) {
             transacoesPendentes.remove(t);
+        }
+    }
+
+    private synchronized void minerarBlocoImediato() {
+        Bloco bloco = criarBlocoCandidato("TEST-NODE");
+        if (bloco != null) {
+            bloco.minerarBloco(dificuldade);
+            if (validarBloco(bloco)) {
+                adicionarBloco(bloco);
+                limparTransacoesProcessadas(bloco);
+            }
         }
     }
 
@@ -291,27 +308,28 @@ public class BlockchainGovernamental implements Serializable {
 
     // ==================== ATUALIZAÇÃO DE ÍNDICES ====================
 
-    private void atualizarIndices(Bloco bloco) {
+    public synchronized void atualizarIndices(Bloco bloco) {
         for (Transacao t : bloco.getTransacoes()) {
             if (t == null) continue;
 
             switch (t.getTipo()) {
                 case CADASTRO_ADMIN:
-                    Administrador admin = (Administrador) t.getPayload();
+                    // ★ Use getPayloadAs() para desserializar
+                    Administrador admin = t.getPayloadAs(Administrador.class);
                     if (admin != null) {
                         admins.put(admin.getId(), admin);
                     }
                     break;
 
                 case CADASTRO_ELEITOR:
-                    Eleitor eleitor = (Eleitor) t.getPayload();
+                    Eleitor eleitor = t.getPayloadAs(Eleitor.class);
                     if (eleitor != null) {
                         eleitores.put(eleitor.getTituloDeEleitorHash(), eleitor);
                     }
                     break;
 
                 case CADASTRO_CANDIDATO:
-                    Candidato candidato = (Candidato) t.getPayload();
+                    Candidato candidato = t.getPayloadAs(Candidato.class);
                     if (candidato != null) {
                         candidatos.put(candidato.getNumero(), candidato);
                     }
@@ -320,13 +338,14 @@ public class BlockchainGovernamental implements Serializable {
                 case CRIACAO_ELEICAO:
                 case INICIO_ELEICAO:
                 case FIM_ELEICAO:
-                    Eleicao eleicao = (Eleicao) t.getPayload();
+                    Eleicao eleicao = t.getPayloadAs(Eleicao.class);
                     if (eleicao != null) {
                         eleicoes.put(eleicao.getId(), eleicao);
                     }
                     break;
 
                 case VOTO:
+                    Voto voto = t.getPayloadAs(Voto.class);
                     // Processamento de voto se necessário
                     break;
 
@@ -420,9 +439,9 @@ public class BlockchainGovernamental implements Serializable {
     public synchronized Voto buscarVotoPorHash(String hash) {
         for (Bloco bloco : cadeia) {
             for (Transacao t : bloco.getTransacoes()) {
-                if (t.getTipo().equals(TipoTransacao.VOTO) && t.getPayload() instanceof Voto) {
+                if (t.getTipo() == TipoTransacao.VOTO) {
                     Voto voto = t.getPayloadAs(Voto.class);
-                    if (voto.getIdEleitorHash().equals(hash)) {
+                    if (voto != null && voto.getIdEleitorHash().equals(hash)) {
                         return voto;
                     }
                 }
@@ -430,6 +449,11 @@ public class BlockchainGovernamental implements Serializable {
         }
         return null;
     }
+
+    public void setModoTeste(boolean modoTeste) {
+        this.modoTeste = modoTeste;
+    }
+
 
     public static String gerarIdUnico(String idAdmin, TipoTransacao tipo, Object dados, long timestamp) {
         String dadosString = dados == null ? "" : dados.toString();

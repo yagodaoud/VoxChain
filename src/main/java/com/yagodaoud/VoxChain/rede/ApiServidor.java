@@ -49,6 +49,11 @@ public class ApiServidor {
             return gson.toJson(no.getStatus());
         });
 
+        get("/blockchain/find-admin", (req, res) -> {
+            res.type("application/json");
+            return gson.toJson(no.getBlockchain().buscarAdmin("TSE-SUPER-001"));
+        });
+
         post("/transacao", (req, res) -> {
             try {
                 // Parse do JSON recebido

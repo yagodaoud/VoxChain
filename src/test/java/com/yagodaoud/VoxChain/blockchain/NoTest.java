@@ -122,7 +122,7 @@ class NoTest {
     void deveRejeitarTransacaoNula() {
         no.adicionarTransacao(null);
 
-        assertThat(no.getBlockchain().getPoolSize()).isEqualTo(0);
+        assertThat(no.getBlockchain().getPoolSize()).isEqualTo(1); // 1 Por causa do bloco de super admin
     }
 
     // ============ TESTES DE STATUS ============
@@ -238,7 +238,7 @@ class NoTest {
 
         // Verifica estado antes
         int tamanhoAntes = no.getBlockchain().getTamanho();
-        assertThat(tamanhoAntes).isEqualTo(1);
+        assertThat(tamanhoAntes).isEqualTo(1); // 1 Por causa do bloco de super admin
 
         // Sincroniza com a blockchain remota mais longa
         no.sincronizarBlockchain(blocosRemotos);

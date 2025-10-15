@@ -1,5 +1,6 @@
 package com.yagodaoud.VoxChain.blockchain;
 
+import com.yagodaoud.VoxChain.blockchain.servicos.ServicoAdministracao;
 import com.yagodaoud.VoxChain.config.ConfigManager;
 import com.yagodaoud.VoxChain.modelo.Transacao;
 import com.yagodaoud.VoxChain.rede.MensagemP2P;
@@ -24,6 +25,7 @@ public class No {
     private Thread threadServidorAceitar;
     private Minerador minerador;
     private PeerDiscovery peerDiscovery;
+    private ServicoAdministracao servicoAdministracao;
 
     public No(String id, String ip, int porta) {
         this.id = id;
@@ -31,6 +33,7 @@ public class No {
         this.porta = porta;
         this.blockchain = new BlockchainGovernamental(2, 5);
         this.peers = new CopyOnWriteArrayList<>();
+        this.servicoAdministracao = new ServicoAdministracao(blockchain);
     }
 
     // ============ INICIALIZAÇÃO ============

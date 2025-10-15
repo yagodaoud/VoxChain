@@ -12,34 +12,43 @@ public class Transacao implements Serializable {
 
     private String id;
     private TipoTransacao tipo;
-    private String payload;
+    private String payload;  // ★ Sempre String (JSON)
     private String idOrigem;
     private long timestamp;
+
+    // ============ CONSTRUTORES ============
 
     // Construtor vazio para desserialização
     public Transacao() {
     }
 
-    // ★ Construtor com payload já como String JSON
-    public Transacao(TipoTransacao tipo, String payloadJson, String idOrigem) {
+    // ★ NOVO: Aceita qualquer Object e converte para JSON
+    public <T> Transacao(TipoTransacao tipo, T payloadObject, String idOrigem) {
         this.timestamp = Instant.now().toEpochMilli();
         this.tipo = tipo;
-        this.payload = payloadJson; // ★ Já é string, não serializa de novo
         this.idOrigem = idOrigem;
 
-        // ★ Gerar ID usando um hash simples
+        // ★ Converte objeto para JSON automaticamente
+        this.payload = gson.toJson(payloadObject);
+
+        // ★ Gera ID único
         this.id = gerarIdUnico(idOrigem, tipo, this.timestamp);
     }
 
-    // ★ NOVO: ID simples e previsível
+    // ============ GERAÇÃO DE ID ============
+
     private static String gerarIdUnico(String idOrigem, TipoTransacao tipo, long timestamp) {
         String uuid = UUID.randomUUID().toString().substring(0, 8);
         return idOrigem + "-" + tipo.name() + "-" + timestamp + "-" + uuid;
     }
 
+    // ============ SETTERS ============
+
     public void setId(String id) {
         this.id = id;
     }
+
+    // ============ GETTERS ============
 
     public String getId() {
         return id;
@@ -49,12 +58,22 @@ public class Transacao implements Serializable {
         return tipo;
     }
 
-    public Serializable getPayload() {
+    // ★ Retorna o JSON string do payload
+    public String getPayloadJson() {
         return payload;
     }
 
+    // ★ Converte JSON para um objeto específico
     public <T> T getPayloadAs(Class<T> clazz) {
-        return gson.fromJson(payload, clazz);
+        if (payload == null || payload.isEmpty()) {
+            return null;
+        }
+        try {
+            return gson.fromJson(payload, clazz);
+        } catch (Exception e) {
+            System.err.println("Erro ao desserializar payload: " + e.getMessage());
+            return null;
+        }
     }
 
     public String getIdOrigem() {
@@ -64,6 +83,8 @@ public class Transacao implements Serializable {
     public long getTimestamp() {
         return timestamp;
     }
+
+    // ============ EQUALS E HASHCODE ============
 
     @Override
     public boolean equals(Object o) {
@@ -78,8 +99,15 @@ public class Transacao implements Serializable {
         return id != null ? id.hashCode() : 0;
     }
 
+    // ============ TOSTRING ============
+
     @Override
     public String toString() {
-        return "Transacao{" + "id='" + id + '\'' + ", tipo=" + tipo + ", timestamp=" + timestamp + '}';
+        return "Transacao{" +
+                "id='" + id + '\'' +
+                ", tipo=" + tipo +
+                ", idOrigem='" + idOrigem + '\'' +
+                ", timestamp=" + timestamp +
+                '}';
     }
 }
