@@ -1,6 +1,7 @@
 package com.yagodaoud.VoxChain.blockchain;
 
 import com.yagodaoud.VoxChain.modelo.Transacao;
+import com.yagodaoud.VoxChain.modelo.Voto;
 import com.yagodaoud.VoxChain.modelo.enums.TipoTransacao;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -171,7 +172,7 @@ class NoTest {
 
         // Cria e minera um bloco
         Transacao t = new Transacao(TipoTransacao.VOTO,
-                "{\"idEleitor\":\"123\"}", ID_NO);
+                new Voto("123", "Candidato1", "Tipo1", "Eleicao1"), ID_NO);
         no.adicionarTransacao(t);
 
         BlockchainGovernamental blockchain = no.getBlockchain();

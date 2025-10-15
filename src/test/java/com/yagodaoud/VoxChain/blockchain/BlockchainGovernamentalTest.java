@@ -1,9 +1,6 @@
 package com.yagodaoud.VoxChain.blockchain;
 
-import com.yagodaoud.VoxChain.modelo.Administrador;
-import com.yagodaoud.VoxChain.modelo.Candidato;
-import com.yagodaoud.VoxChain.modelo.Eleicao;
-import com.yagodaoud.VoxChain.modelo.Transacao;
+import com.yagodaoud.VoxChain.modelo.*;
 import com.yagodaoud.VoxChain.modelo.enums.TipoTransacao;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,7 +34,7 @@ class BlockchainGovernamentalTest {
     @DisplayName("Deve adicionar transação ao pool")
     void deveAdicionarTransacaoAoPool() {
         Transacao t = new Transacao(TipoTransacao.VOTO,
-                "{\"idEleitor\":\"123\"}", "TSE-SP");
+                new Voto("123", "Candidato1", "Tipo1", "Eleicao1"), "TSE-SP");
 
         boolean adicionada = blockchain.adicionarAoPool(t);
 
@@ -49,7 +46,7 @@ class BlockchainGovernamentalTest {
     @DisplayName("Não deve adicionar transação duplicada")
     void naoDeveAdicionarTransacaoDuplicada() {
         Transacao t = new Transacao(TipoTransacao.VOTO,
-                "{\"idEleitor\":\"123\"}", "TSE-SP");
+                new Voto("123", "Candidato1", "Tipo1", "Eleicao1"), "TSE-SP");
 
         blockchain.adicionarAoPool(t);
         boolean adicionadaNovaVez = blockchain.adicionarAoPool(t);
@@ -62,7 +59,7 @@ class BlockchainGovernamentalTest {
     @DisplayName("Deve verificar se transação existe")
     void deveVerificarSeTransacaoExiste() {
         Transacao t = new Transacao(TipoTransacao.VOTO,
-                "{\"idEleitor\":\"123\"}", "TSE-SP");
+                new Voto("123", "Candidato1", "Tipo1", "Eleicao1"), "TSE-SP");
         blockchain.adicionarAoPool(t);
 
         boolean existe = blockchain.transacaoExiste(t);
@@ -83,9 +80,9 @@ class BlockchainGovernamentalTest {
     @DisplayName("Deve criar bloco candidato com transações do pool")
     void deveCriarBlocoCandidato() {
         Transacao t1 = new Transacao(TipoTransacao.VOTO,
-                "{\"idEleitor\":\"123\"}", "TSE-SP");
+                new Voto("123", "Candidato1", "Tipo1", "Eleicao1"), "TSE-SP");
         Transacao t2 = new Transacao(TipoTransacao.VOTO,
-                "{\"idEleitor\":\"456\"}", "TSE-SP");
+                "{\"idEleitorHash\":\"456\"}", "TSE-SP");
 
         blockchain.adicionarAoPool(t1);
         blockchain.adicionarAoPool(t2);
@@ -111,7 +108,7 @@ class BlockchainGovernamentalTest {
         for (int i = 0; i < 8; i++) {
             Thread.sleep(100);
             Transacao t = new Transacao(TipoTransacao.VOTO,
-                    "{\"idEleitor\":\"" + i + "\"}", "TSE-SP");
+                    "{\"idEleitorHash\":\"" + i + "\"}", "TSE-SP");
             blockchain.adicionarAoPool(t);
         }
 
@@ -124,7 +121,7 @@ class BlockchainGovernamentalTest {
     @DisplayName("Deve adicionar bloco válido à cadeia")
     void deveAdicionarBlocoValido() {
         Transacao t = new Transacao(TipoTransacao.VOTO,
-                "{\"idEleitor\":\"123\"}", "TSE-SP");
+                new Voto("123", "Candidato1", "Tipo1", "Eleicao1"), "TSE-SP");
         blockchain.adicionarAoPool(t);
 
         Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP");
@@ -142,7 +139,7 @@ class BlockchainGovernamentalTest {
     @DisplayName("Deve limpar transações após mineração")
     void deveLimparTransacoesAposMineracao() {
         Transacao t = new Transacao(TipoTransacao.VOTO,
-                "{\"idEleitor\":\"123\"}", "TSE-SP");
+                new Voto("123", "Candidato1", "Tipo1", "Eleicao1"), "TSE-SP");
         blockchain.adicionarAoPool(t);
 
         Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP");
@@ -159,11 +156,11 @@ class BlockchainGovernamentalTest {
     void deveMantterTransacoesNaoIncluidasNoBloco() {
         // Adiciona 3 transações
         Transacao t1 = new Transacao(TipoTransacao.VOTO,
-                "{\"idEleitor\":\"1\"}", "TSE-SP");
+                new Voto("1", "Candidato1", "Tipo1", "Eleicao1"), "TSE-SP");
         Transacao t2 = new Transacao(TipoTransacao.VOTO,
-                "{\"idEleitor\":\"2\"}", "TSE-SP");
+                new Voto("2", "Candidato2", "Tipo2", "Eleicao2"), "TSE-SP");
         Transacao t3 = new Transacao(TipoTransacao.VOTO,
-                "{\"idEleitor\":\"3\"}", "TSE-SP");
+                new Voto("3", "Candidato3", "Tipo3", "Eleicao3"), "TSE-SP");
 
         blockchain.adicionarAoPool(t1);
         blockchain.adicionarAoPool(t2);
@@ -185,7 +182,7 @@ class BlockchainGovernamentalTest {
     @DisplayName("Deve validar bloco correto")
     void deveValidarBlocoCorreto() {
         Transacao t = new Transacao(TipoTransacao.VOTO,
-                "{\"idEleitor\":\"123\"}", "TSE-SP");
+                new Voto("123", "Candidato1", "Tipo1", "Eleicao1"), "TSE-SP");
         blockchain.adicionarAoPool(t);
 
         Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP");
@@ -199,7 +196,7 @@ class BlockchainGovernamentalTest {
     @DisplayName("Deve rejeitar bloco com hash inválido")
     void deveRejeitarBlocoComHashInvalido() {
         Transacao t = new Transacao(TipoTransacao.VOTO,
-                "{\"idEleitor\":\"123\"}", "TSE-SP");
+                new Voto("123", "Candidato1", "Tipo1", "Eleicao1"), "TSE-SP");
         blockchain.adicionarAoPool(t);
 
         Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP");
@@ -216,7 +213,7 @@ class BlockchainGovernamentalTest {
     @DisplayName("Deve rejeitar bloco com índice inválido")
     void deveRejeitarBlocoComIndiceInvalido() {
         Transacao t = new Transacao(TipoTransacao.VOTO,
-                "{\"idEleitor\":\"123\"}", "TSE-SP");
+                new Voto("123", "Candidato1", "Tipo1", "Eleicao1"), "TSE-SP");
         blockchain.adicionarAoPool(t);
 
         Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP");
@@ -237,7 +234,7 @@ class BlockchainGovernamentalTest {
         // Adiciona 2 blocos
         for (int i = 0; i < 2; i++) {
             Transacao t = new Transacao(TipoTransacao.VOTO,
-                    "{\"idEleitor\":\"" + i + "\"}", "TSE-SP");
+                    new Voto(String.valueOf(i), "Candidato1", "Tipo1", "Eleicao1"), "TSE-SP");
             blockchain.adicionarAoPool(t);
 
             Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP");
