@@ -87,7 +87,7 @@ class BlockchainGovernamentalTest {
         blockchain.adicionarAoPool(t1);
         blockchain.adicionarAoPool(t2);
 
-        Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP");
+        Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP", null);
 
         assertThat(bloco).isNotNull();
         assertThat(bloco.getTransacoes()).hasSize(2);
@@ -97,7 +97,7 @@ class BlockchainGovernamentalTest {
     @Test
     @DisplayName("Não deve criar bloco candidato com pool vazio")
     void naoDeveCriarBlocoCandidatoComPoolVazio() {
-        Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP");
+        Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP", null);
         assertThat(bloco).isNull();
     }
 
@@ -112,7 +112,7 @@ class BlockchainGovernamentalTest {
             blockchain.adicionarAoPool(t);
         }
 
-        Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP");
+        Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP", null);
 
         assertThat(bloco.getTransacoes()).hasSize(5);
     }
@@ -124,7 +124,7 @@ class BlockchainGovernamentalTest {
                 new Voto("123", "Candidato1", "Tipo1", "Eleicao1"), "TSE-SP");
         blockchain.adicionarAoPool(t);
 
-        Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP");
+        Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP", null);
         bloco.minerarBloco(2);
 
         blockchain.adicionarBloco(bloco);
@@ -142,7 +142,7 @@ class BlockchainGovernamentalTest {
                 new Voto("123", "Candidato1", "Tipo1", "Eleicao1"), "TSE-SP");
         blockchain.adicionarAoPool(t);
 
-        Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP");
+        Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP", null);
         bloco.minerarBloco(2);
         blockchain.adicionarBloco(bloco);
 
@@ -167,7 +167,7 @@ class BlockchainGovernamentalTest {
         blockchain.adicionarAoPool(t3);
 
         // Cria bloco com apenas 2 (limite é 5, mas criarBlocoCandidato pega as 3)
-        Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP");
+        Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP", null);
         bloco.minerarBloco(2);
         blockchain.adicionarBloco(bloco);
         blockchain.limparTransacoesProcessadas(bloco);
@@ -185,7 +185,7 @@ class BlockchainGovernamentalTest {
                 new Voto("123", "Candidato1", "Tipo1", "Eleicao1"), "TSE-SP");
         blockchain.adicionarAoPool(t);
 
-        Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP");
+        Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP", null);
         bloco.minerarBloco(2);
 
         boolean valido = blockchain.validarBloco(bloco);
@@ -199,7 +199,7 @@ class BlockchainGovernamentalTest {
                 new Voto("123", "Candidato1", "Tipo1", "Eleicao1"), "TSE-SP");
         blockchain.adicionarAoPool(t);
 
-        Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP");
+        Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP", null);
         bloco.minerarBloco(2);
 
         // Corrompe o hash
@@ -216,7 +216,7 @@ class BlockchainGovernamentalTest {
                 new Voto("123", "Candidato1", "Tipo1", "Eleicao1"), "TSE-SP");
         blockchain.adicionarAoPool(t);
 
-        Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP");
+        Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP", null);
         bloco.minerarBloco(2);
 
         // Define índice errado (deve ser 1, não 5)
@@ -237,7 +237,7 @@ class BlockchainGovernamentalTest {
                     new Voto(String.valueOf(i), "Candidato1", "Tipo1", "Eleicao1"), "TSE-SP");
             blockchain.adicionarAoPool(t);
 
-            Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP");
+            Bloco bloco = blockchain.criarBlocoCandidato("TSE-SP", null);
             bloco.minerarBloco(2);
             blockchain.adicionarBloco(bloco);
         }

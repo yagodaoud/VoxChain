@@ -57,7 +57,7 @@ public class Minerador implements Runnable {
         System.out.println("[" + no.getId() + "] Iniciando mineração (blockchain: " +
                 tamanhoBlockchain + " blocos, pool: " + poolSize + " transações)");
 
-        Bloco bloco = no.getBlockchain().criarBlocoCandidato(no.getId());
+        Bloco bloco = no.getBlockchain().criarBlocoCandidato(no.getId(), null);
         if (bloco == null) {
             System.out.println("[" + no.getId() + "] Pool vazio, cancelando mineração");
             minerando = false;

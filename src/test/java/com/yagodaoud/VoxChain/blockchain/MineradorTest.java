@@ -52,7 +52,7 @@ class MineradorTest {
 
         when(blockchainMock.temTransacoesPendentes()).thenReturn(true);
         when(blockchainMock.getTamanho()).thenReturn(1);
-        when(blockchainMock.criarBlocoCandidato("TSE-SP")).thenReturn(blocoMock);
+        when(blockchainMock.criarBlocoCandidato("TSE-SP", null)).thenReturn(blocoMock);
         when(blockchainMock.validarBloco(blocoMock)).thenReturn(true);
 
         minerador.minerarAgora();
@@ -69,7 +69,7 @@ class MineradorTest {
 
         minerador.minerarAgora();
 
-        verify(blockchainMock, never()).criarBlocoCandidato(anyString());
+        verify(blockchainMock, never()).criarBlocoCandidato(anyString(), anyLong());
     }
 
     @Test
@@ -94,7 +94,7 @@ class MineradorTest {
 
         when(blockchainMock.temTransacoesPendentes()).thenReturn(true);
         when(blockchainMock.getTamanho()).thenReturn(2);  // Mas blockchain já tem 2 blocos
-        when(blockchainMock.criarBlocoCandidato("TSE-SP")).thenReturn(blocoMock);
+        when(blockchainMock.criarBlocoCandidato("TSE-SP", null)).thenReturn(blocoMock);
 
         minerador.minerarAgora();
 
@@ -111,7 +111,7 @@ class MineradorTest {
 
         when(blockchainMock.temTransacoesPendentes()).thenReturn(true);
         when(blockchainMock.getTamanho()).thenReturn(1);
-        when(blockchainMock.criarBlocoCandidato("TSE-SP")).thenReturn(blocoMock);
+        when(blockchainMock.criarBlocoCandidato("TSE-SP", null)).thenReturn(blocoMock);
         when(blockchainMock.validarBloco(blocoMock)).thenReturn(false);  // Bloco inválido
 
         minerador.minerarAgora();
@@ -131,7 +131,7 @@ class MineradorTest {
 
         when(blockchainMock.temTransacoesPendentes()).thenReturn(true);
         when(blockchainMock.getTamanho()).thenReturn(1);
-        when(blockchainMock.criarBlocoCandidato("TSE-SP")).thenReturn(blocoMock);
+        when(blockchainMock.criarBlocoCandidato("TSE-SP", null)).thenReturn(blocoMock);
         when(blockchainMock.validarBloco(blocoMock)).thenReturn(true);
 
         minerador.minerarAgora();
@@ -151,7 +151,7 @@ class MineradorTest {
 
         when(blockchainMock.temTransacoesPendentes()).thenReturn(true);
         when(blockchainMock.getTamanho()).thenReturn(1);
-        when(blockchainMock.criarBlocoCandidato("TSE-SP")).thenReturn(blocoMock);
+        when(blockchainMock.criarBlocoCandidato("TSE-SP", null)).thenReturn(blocoMock);
         when(blockchainMock.validarBloco(blocoMock)).thenReturn(true);
 
         minerador.minerarAgora();
@@ -165,7 +165,7 @@ class MineradorTest {
     @DisplayName("Não deve minerar com pool vazio")
     void naoDeveMinearComPoolVazio() {
         when(blockchainMock.temTransacoesPendentes()).thenReturn(false);
-        when(blockchainMock.criarBlocoCandidato("TSE-SP")).thenReturn(null);
+        when(blockchainMock.criarBlocoCandidato("TSE-SP", null)).thenReturn(null);
 
         minerador.minerarAgora();
 

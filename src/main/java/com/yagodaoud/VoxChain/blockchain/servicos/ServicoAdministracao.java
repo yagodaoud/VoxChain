@@ -1,8 +1,11 @@
 package com.yagodaoud.VoxChain.blockchain.servicos;
 
+import com.yagodaoud.VoxChain.blockchain.Bloco;
 import com.yagodaoud.VoxChain.modelo.*;
 import com.yagodaoud.VoxChain.modelo.enums.*;
 import com.yagodaoud.VoxChain.blockchain.BlockchainGovernamental;
+
+import java.util.List;
 
 public class ServicoAdministracao {
     private BlockchainGovernamental blockchain;
@@ -17,6 +20,8 @@ public class ServicoAdministracao {
 
     private void inicializarSuperAdmin() {
         if (blockchain.buscarAdmin(SUPER_ADMIN_ID) == null) {
+            long TIMESTAMP_SUPER_ADMIN = 1700000000000L;
+
             Administrador superAdmin = new Administrador(
                     SUPER_ADMIN_ID,
                     "Super Administrador TSE",
@@ -25,14 +30,17 @@ public class ServicoAdministracao {
                     JurisdicaoAdmin.NACIONAL
             );
 
-            // ★ Passe o objeto diretamente, NOT o JSON
             Transacao t = new Transacao(
                     TipoTransacao.CADASTRO_ADMIN,
                     superAdmin,
-                    "SYSTEM"
+                    "SYSTEM",
+                    TIMESTAMP_SUPER_ADMIN
             );
 
-            blockchain.adicionarAoPool(t);
+            Bloco blocoAdmin = new Bloco(1, List.of(t), blockchain.getBloco(0).getHash(), "SYSTEM", 1700000000000L);
+            blocoAdmin.minerarBloco(blockchain.getDificuldade());
+            blockchain.adicionarBloco(blocoAdmin);
+
             System.out.println("✓ Super Admin inicializado: " + SUPER_ADMIN_ID);
         }
     }

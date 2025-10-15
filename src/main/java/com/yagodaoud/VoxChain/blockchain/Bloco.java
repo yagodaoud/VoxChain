@@ -5,6 +5,7 @@ import com.yagodaoud.VoxChain.modelo.Transacao;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,9 +22,9 @@ public class Bloco implements Serializable {
     private final String mineradoPor;
     private String assinaturaMinerador; // opcional — simulando chave pública do nó minerador
 
-    public Bloco(int indice, List<Transacao> transacoes, String hashAnterior, String mineradoPor) {
+    public Bloco(int indice, List<Transacao> transacoes, String hashAnterior, String mineradoPor, Long timestampFixo) {
         this.indice = indice;
-        this.timestamp = Instant.now().toEpochMilli();
+        this.timestamp = timestampFixo != null ? timestampFixo : Instant.now().toEpochMilli();
         this.transacoes = new ArrayList<>(transacoes);
         this.hashAnterior = hashAnterior;
         this.nonce = 0;

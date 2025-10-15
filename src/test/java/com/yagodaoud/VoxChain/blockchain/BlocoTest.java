@@ -23,7 +23,7 @@ class BlocoTest {
         Transacao t = new Transacao(TipoTransacao.VOTO, "{\"id\":\"1\"}", "TSE-SP");
         transacoes.add(t);
 
-        bloco = new Bloco(1, transacoes, "hash_anterior_123", "TSE-SP");
+        bloco = new Bloco(1, transacoes, "hash_anterior_123", "TSE-SP", null);
     }
 
     @Test
@@ -61,7 +61,7 @@ class BlocoTest {
         List<Transacao> transacoes2 = new ArrayList<>();
         transacoes2.add(t2);
 
-        Bloco bloco2 = new Bloco(1, transacoes2, "hash_anterior_123", "TSE-SP");
+        Bloco bloco2 = new Bloco(1, transacoes2, "hash_anterior_123", "TSE-SP", null);
 
         String hash1 = bloco.calcularHash();
         String hash2 = bloco2.calcularHash();
@@ -107,12 +107,12 @@ class BlocoTest {
     @Test
     @DisplayName("Bloco com mais transações deve ter hash diferente")
     void blocoComMaisTransacoesDeveTerHashDiferente() {
-        Bloco bloco1 = new Bloco(1, transacoes, "hash_anterior", "TSE-SP");
+        Bloco bloco1 = new Bloco(1, transacoes, "hash_anterior", "TSE-SP", null);
 
         List<Transacao> transacoes2 = new ArrayList<>(transacoes);
         Transacao t2 = new Transacao(TipoTransacao.VOTO, "{\"id\":\"2\"}", "TSE-SP");
         transacoes2.add(t2);
-        Bloco bloco2 = new Bloco(1, transacoes2, "hash_anterior", "TSE-SP");
+        Bloco bloco2 = new Bloco(1, transacoes2, "hash_anterior", "TSE-SP", null);
 
         assertThat(bloco1.calcularHash()).isNotEqualTo(bloco2.calcularHash());
     }

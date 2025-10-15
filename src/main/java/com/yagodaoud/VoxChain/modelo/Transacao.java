@@ -22,6 +22,15 @@ public class Transacao implements Serializable {
     public Transacao() {
     }
 
+    public <T> Transacao(TipoTransacao tipo, T payloadObject,
+                         String idOrigem, long timestampFixo) {
+        this.timestamp = timestampFixo;
+        this.tipo = tipo;
+        this.idOrigem = idOrigem;
+        this.payload = gson.toJson(payloadObject);
+        this.id = gerarIdUnico(idOrigem, tipo, this.timestamp, true);
+    }
+
     // ★ NOVO: Aceita qualquer Object e converte para JSON
     public <T> Transacao(TipoTransacao tipo, T payloadObject, String idOrigem) {
         this.timestamp = Instant.now().toEpochMilli();
@@ -32,14 +41,39 @@ public class Transacao implements Serializable {
         this.payload = gson.toJson(payloadObject);
 
         // ★ Gera ID único
-        this.id = gerarIdUnico(idOrigem, tipo, this.timestamp);
+        this.id = gerarIdUnico(idOrigem, tipo, this.timestamp, false);
     }
 
     // ============ GERAÇÃO DE ID ============
 
-    private static String gerarIdUnico(String idOrigem, TipoTransacao tipo, long timestamp) {
-        String uuid = UUID.randomUUID().toString().substring(0, 8);
-        return idOrigem + "-" + tipo.name() + "-" + timestamp + "-" + uuid;
+    private static String gerarIdUnico(String idOrigem, TipoTransacao tipo, long timestamp, boolean isFixed) {
+        if (isFixed) {
+            String input = idOrigem + tipo.name() + timestamp;
+            try {
+                java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+                byte[] hashBytes = digest.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                // Take first 8 characters of the hex string
+                String hashHex = bytesToHex(hashBytes).substring(0, 8);
+                return idOrigem + "-" + tipo.name() + "-" + timestamp + "-" + hashHex;
+            } catch (java.security.NoSuchAlgorithmException e) {
+                throw new RuntimeException("Failed to generate hash for fixed ID", e);
+            }
+        } else {
+            String uuid = UUID.randomUUID().toString().substring(0, 8);
+            return idOrigem + "-" + tipo.name() + "-" + timestamp + "-" + uuid;
+        }
+    }
+
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder hexString = new StringBuilder(2 * bytes.length);
+        for (byte b : bytes) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+        return hexString.toString();
     }
 
     // ============ SETTERS ============

@@ -87,7 +87,7 @@ class NoTest {
         BlockchainGovernamental blockchain = no.getBlockchain();
 
         assertThat(blockchain).isNotNull();
-        assertThat(blockchain.getTamanho()).isEqualTo(1);  // Apenas bloco gênesis
+        assertThat(blockchain.getTamanho()).isEqualTo(2);  // Apenas bloco gênesis e super admin
     }
 
     // ============ TESTES DE ADIÇÃO DE TRANSAÇÕES ============
@@ -123,7 +123,7 @@ class NoTest {
     void deveRejeitarTransacaoNula() {
         no.adicionarTransacao(null);
 
-        assertThat(no.getBlockchain().getPoolSize()).isEqualTo(1); // 1 Por causa do bloco de super admin
+        assertThat(no.getBlockchain().getPoolSize()).isEqualTo(0);
     }
 
     // ============ TESTES DE STATUS ============
@@ -143,7 +143,7 @@ class NoTest {
     void statusDeveConterNumeroDesBlocos() {
         String status = no.getStatus();
 
-        assertThat(status).contains("1 blocos");  // Bloco gênesis
+        assertThat(status).contains("2 blocos");  // Bloco gênesis e admin
     }
 
     @Test
@@ -162,7 +162,7 @@ class NoTest {
         BlockchainGovernamental blockchain = no.getBlockchain();
 
         assertThat(blockchain.getTamanho()).isGreaterThanOrEqualTo(1);
-        assertThat(blockchain.obterUltimoBloco().getIndice()).isEqualTo(0);
+        assertThat(blockchain.getBloco(0).getIndice()).isEqualTo(0);
     }
 
     @Test
@@ -176,7 +176,7 @@ class NoTest {
         no.adicionarTransacao(t);
 
         BlockchainGovernamental blockchain = no.getBlockchain();
-        Bloco bloco = blockchain.criarBlocoCandidato(ID_NO);
+        Bloco bloco = blockchain.criarBlocoCandidato(ID_NO, null);
         bloco.minerarBloco(2);
 
         int tamanhoAntes = blockchain.getTamanho();
@@ -202,7 +202,7 @@ class NoTest {
     @DisplayName("Deve descartar bloco antigo (fork)")
     void deveDescartarBlocoAntigo() {
         // Cria bloco com índice 0 (já existe)
-        Bloco blocoAntigo = new Bloco(0, java.util.List.of(), "0", "OUTRO-NO");
+        Bloco blocoAntigo = new Bloco(0, java.util.List.of(), "0", "OUTRO-NO", null);
         blocoAntigo.minerarBloco(2);
 
         int tamanhoAntes = no.getBlockchain().getTamanho();
@@ -220,16 +220,16 @@ class NoTest {
     void deveSincronizarComBlockchainMaisLonga() {
         no.iniciar();
 
-        // Pega o hash do primeiro bloco (gênesis) APÓS iniciar
+        // Pega o hash do segundo bloco (super admin) APÓS iniciar
         List<Bloco> blocosLocais = no.getBlockchain().getBlocos();
-        String hashDoPrimeiroBloco = blocosLocais.get(0).getHash();
+        String hashDoSegundoBloco = blocosLocais.get(1).getHash();
 
-        // Cria blockchain remota com mesmo gênesis
+        // Cria blockchain remota com mesmo gênesis e super admin
         List<Bloco> blocosRemotos = new ArrayList<>(blocosLocais);
 
-        // Cria um novo bloco (índice 1) usando o hash do gênesis local
-        Bloco novoBloco1 = new Bloco(1, java.util.List.of(),
-                hashDoPrimeiroBloco, "OUTRO-NO");
+        // Cria um novo bloco (índice 2) usando o hash do segundo bloco local
+        Bloco novoBloco1 = new Bloco(2, java.util.List.of(),
+                hashDoSegundoBloco, "OUTRO-NO", null);
 
         // Minera o novo bloco
         novoBloco1.minerarBloco(2);
@@ -239,7 +239,7 @@ class NoTest {
 
         // Verifica estado antes
         int tamanhoAntes = no.getBlockchain().getTamanho();
-        assertThat(tamanhoAntes).isEqualTo(1); // 1 Por causa do bloco de super admin
+        assertThat(tamanhoAntes).isEqualTo(2); // 2 Por causa dos blocos genesis e super admin
 
         // Sincroniza com a blockchain remota mais longa
         no.sincronizarBlockchain(blocosRemotos);
@@ -247,7 +247,7 @@ class NoTest {
         // Verifica estado depois
         int tamanhoDepois = no.getBlockchain().getTamanho();
         assertThat(tamanhoDepois).isGreaterThan(tamanhoAntes);
-        assertThat(tamanhoDepois).isEqualTo(2);
+        assertThat(tamanhoDepois).isEqualTo(3);
     }
 
     @Test

@@ -51,7 +51,7 @@ public class BlockchainGovernamental implements Serializable {
 
     private void criarBlocoGenesis() {
         List<Transacao> transacoesGenesis = new ArrayList<>();
-        Bloco genesis = new Bloco(0, transacoesGenesis, "0", "SYSTEM");
+        Bloco genesis = new Bloco(0, transacoesGenesis, "0", "SYSTEM", 1700000000000L);
         genesis.minerarBloco(dificuldade);
         cadeia.add(genesis);
     }
@@ -123,7 +123,7 @@ public class BlockchainGovernamental implements Serializable {
 
     // ==================== CRIAÇÃO E MINERAÇÃO DE BLOCOS ====================
 
-    public synchronized Bloco criarBlocoCandidato(String mineradoPor) {
+    public synchronized Bloco criarBlocoCandidato(String mineradoPor, Long timestampFixo) {
         if (transacoesPendentes.isEmpty()) {
             return null;
         }
@@ -139,7 +139,8 @@ public class BlockchainGovernamental implements Serializable {
                 cadeia.size(),
                 transacoesBloco,
                 obterUltimoBloco().getHash(),
-                mineradoPor
+                mineradoPor,
+                timestampFixo
         );
 
         return novoBloco;
@@ -161,7 +162,7 @@ public class BlockchainGovernamental implements Serializable {
     }
 
     private synchronized void minerarBlocoImediato() {
-        Bloco bloco = criarBlocoCandidato("TEST-NODE");
+        Bloco bloco = criarBlocoCandidato("TEST-NODE", null);
         if (bloco != null) {
             bloco.minerarBloco(dificuldade);
             if (validarBloco(bloco)) {
