@@ -12,7 +12,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.*;
 
 @DisplayName("Testes da Classe Bloco")
-class BlocoTest {
+public class BlocoTest {
 
     private Bloco bloco;
     private List<Transacao> transacoes;

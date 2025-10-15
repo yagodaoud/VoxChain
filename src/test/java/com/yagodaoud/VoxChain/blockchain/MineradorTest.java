@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @DisplayName("Testes da Classe Minerador")
-class MineradorTest {
+public class MineradorTest {
 
     private Minerador minerador;
 

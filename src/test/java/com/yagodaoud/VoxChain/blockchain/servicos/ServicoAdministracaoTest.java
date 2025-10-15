@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.*;
 
 @DisplayName("Testes do Serviço de Administração")
-class ServicoAdministracaoTest {
+public class ServicoAdministracaoTest {
 
     private ServicoAdministracao servico;
     private BlockchainGovernamental blockchain;

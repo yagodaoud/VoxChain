@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 
 @DisplayName("Testes da Classe No (Nó da Rede)")
 
-class NoTest {
+public class NoTest {
 
     private No no;
     private static final String ID_NO = "TSE-SP";
