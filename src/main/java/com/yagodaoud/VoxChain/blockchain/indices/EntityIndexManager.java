@@ -99,6 +99,13 @@ public class EntityIndexManager {
         return admins.get(id);
     }
 
+    public Administrador buscarAdminPorNome(String nome) {
+        return admins.values().stream()
+                .filter(admin -> admin.getNome().equals(nome))
+                .findFirst()
+                .orElse(null);
+    }
+
     public Eleitor buscarEleitor(String tituloHash) {
         return eleitores.get(tituloHash);
     }

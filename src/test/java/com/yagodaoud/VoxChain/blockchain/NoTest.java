@@ -3,10 +3,7 @@ package com.yagodaoud.VoxChain.blockchain;
 import com.yagodaoud.VoxChain.modelo.Transacao;
 import com.yagodaoud.VoxChain.modelo.Voto;
 import com.yagodaoud.VoxChain.modelo.enums.TipoTransacao;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.*;
 import com.yagodaoud.VoxChain.rede.Peer;
 import com.yagodaoud.VoxChain.rede.PeerDiscovery;
 
@@ -19,7 +16,6 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.*;
 
 @DisplayName("Testes da Classe No (Nó da Rede)")
-
 public class NoTest {
 
     private No no;
@@ -140,7 +136,7 @@ public class NoTest {
 
     @Test
     @DisplayName("Status deve conter número de blocos")
-    void statusDeveConterNumeroDesBlocos() {
+    void statusDeveConterNumeroDeBlocos() {
         String status = no.getStatus();
 
         assertThat(status).contains("2 blocos");  // Bloco gênesis e admin
