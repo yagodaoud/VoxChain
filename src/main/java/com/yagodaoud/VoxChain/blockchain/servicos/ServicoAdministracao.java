@@ -153,42 +153,6 @@ public class ServicoAdministracao {
         System.out.println("[ADMIN] Admin ativado: " + adminId);
     }
 
-    // ==================== CRIAÇÃO DE ELEIÇÕES ====================
-
-    public void criarEleicao(
-            String solicitanteId,
-            String descricao,
-            long dataInicio,
-            long dataFim) {
-
-        if (!temPermissao(solicitanteId, TipoTransacao.CRIACAO_ELEICAO)) {
-            throw new SecurityException(
-                    "Admin " + solicitanteId + " não tem permissão para criar eleições"
-            );
-        }
-
-        if (dataFim <= dataInicio) {
-            throw new IllegalArgumentException(
-                    "Data de fim deve ser após data de início"
-            );
-        }
-
-        Eleicao eleicao = new Eleicao(descricao, dataInicio, dataFim);
-
-        Transacao t = new Transacao(
-                TipoTransacao.CRIACAO_ELEICAO,
-                eleicao,
-                solicitanteId
-        );
-
-        blockchain.adicionarAoPool(t);
-
-        System.out.println("[ELEIÇÃO] Nova eleição criada:");
-        System.out.println("  ID: " + eleicao.getId());
-        System.out.println("  Descrição: " + descricao);
-        System.out.println("  Criada por: " + solicitanteId);
-    }
-
     // ==================== UTILITÁRIOS ====================
 
     private String gerarSenhaTemporaria() {

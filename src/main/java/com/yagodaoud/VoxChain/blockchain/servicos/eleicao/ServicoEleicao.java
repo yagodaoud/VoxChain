@@ -1,35 +1,43 @@
 package com.yagodaoud.VoxChain.blockchain.servicos.eleicao;
 
 import com.yagodaoud.VoxChain.blockchain.BlockchainGovernamental;
+import com.yagodaoud.VoxChain.blockchain.servicos.ServicoAdministracao;
 import com.yagodaoud.VoxChain.modelo.Candidato;
 import com.yagodaoud.VoxChain.modelo.Eleicao;
 import com.yagodaoud.VoxChain.modelo.Transacao;
 import com.yagodaoud.VoxChain.modelo.Voto;
 import com.yagodaoud.VoxChain.modelo.enums.CargoCandidato;
+import com.yagodaoud.VoxChain.modelo.enums.CategoriaEleicao;
 import com.yagodaoud.VoxChain.modelo.enums.TipoTransacao;
+
+import java.util.List;
 
 public class ServicoEleicao {
 
     private final BlockchainGovernamental blockchain;
-    private static ServicoEleicao instance;
+    private final ServicoAdministracao servicoAdministracao;
 
-    public ServicoEleicao(BlockchainGovernamental blockchain) {
+    public ServicoEleicao(BlockchainGovernamental blockchain, ServicoAdministracao servicoAdministracao) {
         this.blockchain = blockchain;
+        this.servicoAdministracao = servicoAdministracao;
     }
 
-    public static ServicoEleicao getInstance(BlockchainGovernamental blockchain) {
-        if (instance == null) {
-            instance = new ServicoEleicao(blockchain);
+    public List<Eleicao> listarEleicoes() {
+        return blockchain.listarEleicoes();
+    }
+
+    public Eleicao criarEleicao(String solicitanteId, String nome, String descricao, List<CategoriaEleicao> categorias, long dataInicio, long dataFim) {
+        if (!servicoAdministracao.temPermissao(solicitanteId, TipoTransacao.CRIACAO_ELEICAO)) {
+            throw new SecurityException(
+                    "Admin " + solicitanteId + " não tem permissão para criar eleições"
+            );
         }
-        return instance;
-    }
 
-    public Eleicao criarEleicao(String solicitanteId, String descricao, long dataInicio, long dataFim) {
         if (dataFim <= dataInicio) {
             throw new IllegalArgumentException("Data de fim deve ser posterior à data de início.");
         }
 
-        Eleicao novaEleicao = new Eleicao(descricao, dataInicio, dataFim);
+        Eleicao novaEleicao = new Eleicao(nome, descricao, categorias, dataInicio, dataFim);
         Transacao transacao = new Transacao(TipoTransacao.CRIACAO_ELEICAO, novaEleicao, solicitanteId);
         blockchain.adicionarAoPool(transacao);
 

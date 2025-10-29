@@ -53,21 +53,21 @@ public class ApiServidor {
 
         // Aplica o filtro de autenticação a todas as rotas que exigem privilégios de administrador.
         before("/api/v1/admin/*", this::autenticarAdminRequest);
-        before("/api/v1/eleicao/*", this::autenticarAdminRequest);
+        before("/api/v1/eleicao/criar", this::autenticarAdminRequest);
         before("/api/v1/candidato/*", this::autenticarAdminRequest);
 
         // ==================== INICIALIZAÇÃO DE SERVIÇOS ====================
 
         // Instancia os serviços que contêm a lógica de negócio.
         ServicoAdministracao servicoAdmin = new ServicoAdministracao(no.getBlockchain());
-        ServicoEleicao servicoEleicao = new ServicoEleicao(no.getBlockchain());
+        ServicoEleicao servicoEleicao = new ServicoEleicao(no.getBlockchain(), servicoAdmin);
 
         // ==================== REGISTRO DE CONTROLLERS ====================
 
         // Cria uma lista de todos os controllers que compõem a API.
         List<IApiController> controllers = List.of(
                 new AdminController(servicoAdmin),
-                new EleicaoController(servicoEleicao),
+                new EleicaoController(servicoEleicao, servicoAdmin),
                 new BlockchainController(no),
                 new NetworkController(no, monitor)
         );
