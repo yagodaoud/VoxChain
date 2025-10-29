@@ -27,12 +27,12 @@ public class EleicaoController implements IApiController {
         path("/eleicoes", () -> {
             post("/criar", (req, res) -> {
                 res.type("application/json");
-                String solicitanteId = req.attribute("adminId");
+                String cpfHash = req.attribute("cpfHash");
                 NovaEleicaoDTO eleicaoDTO = gson.fromJson(req.body(), NovaEleicaoDTO.class);
 
-                // O servicoEleicao precisará do solicitanteId para validar permissões
+                // O servicoEleicao precisará do cpfHash para validar permissões
                 servicoEleicao.criarEleicao(
-                        solicitanteId,
+                        cpfHash,
                         eleicaoDTO.getNome(),
                         eleicaoDTO.getDescricao(),
                         eleicaoDTO.getCategorias(),

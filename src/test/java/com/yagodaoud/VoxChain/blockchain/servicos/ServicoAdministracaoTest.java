@@ -30,7 +30,7 @@ public class ServicoAdministracaoTest {
     void deveInicializarSuperAdmin() {
         assertThat(blockchain.buscarAdmin(SUPER_ADMIN)).isNotNull();
         assertThat(blockchain.buscarAdmin(SUPER_ADMIN).getNivel())
-                .isEqualTo(NivelAcessoAdmin.SUPER_ADMIN);
+                .isEqualTo(NivelAcesso.SUPER_ADMIN);
     }
 
     // ============ TESTES DE PERMISSÕES ============
@@ -50,7 +50,7 @@ public class ServicoAdministracaoTest {
                 SUPER_ADMIN,
                 "Admin SP",
                 "senha",
-                NivelAcessoAdmin.ADMIN_TSE,
+                NivelAcesso.ADMIN_TSE,
                 JurisdicaoAdmin.SP
         );
 
@@ -64,7 +64,7 @@ public class ServicoAdministracaoTest {
                 SUPER_ADMIN,
                 "Operador 1",
                 "senha",
-                NivelAcessoAdmin.OPERADOR,
+                NivelAcesso.OPERADOR,
                 JurisdicaoAdmin.SP
         );
 
@@ -78,7 +78,7 @@ public class ServicoAdministracaoTest {
                 SUPER_ADMIN,
                 "Admin RJ",
                 "senha",
-                NivelAcessoAdmin.ADMIN_TSE,
+                NivelAcesso.ADMIN_TSE,
                 JurisdicaoAdmin.RJ
         );
 
@@ -96,13 +96,13 @@ public class ServicoAdministracaoTest {
                 SUPER_ADMIN,
                 "Admin Minas Gerais",
                 "senha",
-                NivelAcessoAdmin.ADMIN_TSE,
+                NivelAcesso.ADMIN_TSE,
                 JurisdicaoAdmin.RJ
         );
 
         assertThat(blockchain.buscarAdmin(administrador.getId())).isNotNull();
         assertThat(blockchain.buscarAdmin(administrador.getId()).getNivel())
-                .isEqualTo(NivelAcessoAdmin.ADMIN_TSE);
+                .isEqualTo(NivelAcesso.ADMIN_TSE);
     }
 
     @Test
@@ -112,7 +112,7 @@ public class ServicoAdministracaoTest {
                 SUPER_ADMIN,
                 "Admin RJ",
                 "senha",
-                NivelAcessoAdmin.ADMIN_TSE,
+                NivelAcesso.ADMIN_TSE,
                 JurisdicaoAdmin.RJ
         );
 
@@ -121,7 +121,7 @@ public class ServicoAdministracaoTest {
                         SUPER_ADMIN,
                         "Admin RJ",
                         "senha",
-                        NivelAcessoAdmin.ADMIN_TSE,
+                        NivelAcesso.ADMIN_TSE,
                         JurisdicaoAdmin.RJ
                 )
         ).isInstanceOf(IllegalArgumentException.class)
@@ -135,7 +135,7 @@ public class ServicoAdministracaoTest {
                 SUPER_ADMIN,
                 "Operador",
                 "senha",
-                NivelAcessoAdmin.OPERADOR,
+                NivelAcesso.OPERADOR,
                 JurisdicaoAdmin.SP
         );
 
@@ -144,7 +144,7 @@ public class ServicoAdministracaoTest {
                         "TSE-NOVO",
                         "Novo Admin",
                         "senha",
-                        NivelAcessoAdmin.ADMIN_TSE,
+                        NivelAcesso.ADMIN_TSE,
                         JurisdicaoAdmin.SP
                 )
         ).isInstanceOf(SecurityException.class)
@@ -160,7 +160,7 @@ public class ServicoAdministracaoTest {
                 SUPER_ADMIN,
                 "Admin Rio Grande do Sul",
                 "senha",
-                NivelAcessoAdmin.ADMIN_TSE,
+                NivelAcesso.ADMIN_TSE,
                 JurisdicaoAdmin.RJ
         );
 
@@ -176,7 +176,7 @@ public class ServicoAdministracaoTest {
                 SUPER_ADMIN,
                 "Admin Paraná",
                 "senha",
-                NivelAcessoAdmin.ADMIN_TSE,
+                NivelAcesso.ADMIN_TSE,
                 JurisdicaoAdmin.SP
         );
 

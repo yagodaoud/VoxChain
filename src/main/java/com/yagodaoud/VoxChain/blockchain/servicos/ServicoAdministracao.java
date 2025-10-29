@@ -31,9 +31,9 @@ public class ServicoAdministracao {
 
             Administrador superAdmin = new Administrador(
                     SUPER_ADMIN_ID,
-                    "Super Administrador TSE",
+                    "11111111111",
                     "senha-super-admin-temporaria",
-                    NivelAcessoAdmin.SUPER_ADMIN,
+                    NivelAcesso.SUPER_ADMIN,
                     JurisdicaoAdmin.NACIONAL
             );
 
@@ -53,19 +53,19 @@ public class ServicoAdministracao {
     }
 
     // ==================== VALIDAÇÕES ====================
-    public boolean temPermissao(String adminId, TipoTransacao tipoTransacao) {
-        Administrador admin = blockchain.buscarAdmin(adminId);
+    public boolean temPermissao(String cpfHash, TipoTransacao tipoTransacao) {
+        Administrador admin = blockchain.buscarAdminPorCpfHash(cpfHash);
 
         if (admin == null || !admin.isAtivo()) {
-            System.out.println("[SEGURANÇA] Admin não encontrado ou inativo: " + adminId);
+            System.out.println("[SEGURANÇA] Admin não encontrado ou inativo: " + cpfHash);
             return false;
         }
 
-        if (admin.getNivel() == NivelAcessoAdmin.SUPER_ADMIN) {
+        if (admin.getNivel() == NivelAcesso.SUPER_ADMIN) {
             return true;
         }
 
-        if (admin.getNivel() == NivelAcessoAdmin.ADMIN_TSE) {
+        if (admin.getNivel() == NivelAcesso.ADMIN_TSE) {
             return tipoTransacao == TipoTransacao.CRIACAO_ELEICAO ||
                     tipoTransacao == TipoTransacao.INICIO_ELEICAO ||
                     tipoTransacao == TipoTransacao.FIM_ELEICAO;
@@ -77,9 +77,9 @@ public class ServicoAdministracao {
     // ==================== CADASTRO DE ADMINS ====================
     public Administrador cadastrarNovoAdmin(
             String solicitanteId,
-            String nome,
+            String cpf,
             String senha,
-            NivelAcessoAdmin nivel,
+            NivelAcesso nivel,
             JurisdicaoAdmin jurisdicao) {
 
         if (!temPermissao(solicitanteId, TipoTransacao.CADASTRO_ADMIN)) {
@@ -88,20 +88,20 @@ public class ServicoAdministracao {
             );
         }
 
-        if (blockchain.buscarAdminPorNome(nome) != null) {
+        if (blockchain.buscarAdminPorCpfHash(cpf) != null) {
             throw new IllegalArgumentException(
-                    "Admin com Nome " + nome + " já existe"
+                    "Admin com Cpf " + cpf + " já existe"
             );
         }
 
-        if (nivel == NivelAcessoAdmin.ADMIN_TSE && jurisdicao == null) {
+        if (nivel == NivelAcesso.ADMIN_TSE && jurisdicao == null) {
             throw new IllegalArgumentException(
                     "ADMIN_TSE deve ter uma jurisdição definida"
             );
         }
 
         Administrador novoAdmin = new Administrador(
-                nome,
+                cpf,
                 senha,
                 nivel,
                 jurisdicao != null ? jurisdicao : JurisdicaoAdmin.NACIONAL
@@ -169,7 +169,7 @@ public class ServicoAdministracao {
         System.out.println("\n========== RELATÓRIO DE ADMINS ==========");
         for (Administrador admin : blockchain.listarAdmins()) {
             System.out.println("ID: " + admin.getId());
-            System.out.println("  Nome: " + admin.getNome());
+            System.out.println("  Nome: " + admin.getHashCpf());
             System.out.println("  Nível: " + admin.getNivel());
             System.out.println("  Jurisdição: " + admin.getJurisdicao());
             System.out.println("  Ativo: " + admin.isAtivo());
