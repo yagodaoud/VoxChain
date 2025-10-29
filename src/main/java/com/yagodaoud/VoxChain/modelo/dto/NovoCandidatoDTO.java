@@ -10,6 +10,7 @@ public class NovoCandidatoDTO {
     private String partido;
     private CargoCandidato cargo;
     private String uf;
+    private String fotoUrl;
 
     // Getters
     public String getSolicitanteId() { return solicitanteId; }
@@ -19,4 +20,5 @@ public class NovoCandidatoDTO {
     public String getPartido() { return partido; }
     public CargoCandidato getCargo() { return cargo; }
     public String getUf() { return uf; }
+    public String getFotoUrl() { return fotoUrl; }
 }

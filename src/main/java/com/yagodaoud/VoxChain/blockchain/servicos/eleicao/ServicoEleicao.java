@@ -54,13 +54,17 @@ public class ServicoEleicao {
         blockchain.adicionarAoPool(transacao);
     }
 
-    public Candidato cadastrarCandidato(String solicitanteId, String eleicaoId, String numero, String nome, String partido, CargoCandidato cargo, String uf) {
+    public List<Candidato> listarCandidatos() {
+        return blockchain.listarCandidatos();
+    }
+
+    public Candidato cadastrarCandidato(String solicitanteId, String eleicaoId, String numero, String nome, String partido, CargoCandidato cargo, String uf, String fotoUrl) {
         Eleicao eleicao = blockchain.buscarEleicao(eleicaoId);
         if (eleicao == null) {
             throw new IllegalArgumentException("Eleição não encontrada para cadastrar candidato.");
         }
 
-        Candidato novoCandidato = new Candidato(numero, nome, partido, "URL_FOTO_PADRAO", cargo, uf);
+        Candidato novoCandidato = new Candidato(numero, nome, partido, "URL_FOTO_PADRAO", cargo, uf, fotoUrl);
         Transacao transacao = new Transacao(TipoTransacao.CADASTRO_CANDIDATO, novoCandidato, solicitanteId);
         blockchain.adicionarAoPool(transacao);
 

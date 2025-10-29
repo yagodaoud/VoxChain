@@ -5,5 +5,7 @@ public enum CargoCandidato {
     GOVERNADOR,
     SENADOR,
     DEPUTADO_FEDERAL,
-    DEPUTADO_ESTADUAL
+    DEPUTADO_ESTADUAL,
+    PREFEITO,
+    VEREADOR
 }

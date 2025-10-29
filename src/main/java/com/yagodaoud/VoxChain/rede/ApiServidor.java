@@ -53,8 +53,8 @@ public class ApiServidor {
 
         // Aplica o filtro de autenticação a todas as rotas que exigem privilégios de administrador.
         before("/api/v1/admin/*", this::autenticarAdminRequest);
-        before("/api/v1/eleicao/criar", this::autenticarAdminRequest);
-        before("/api/v1/candidato/*", this::autenticarAdminRequest);
+        before("/api/v1/eleicoes/criar", this::autenticarAdminRequest);
+        before("/api/v1/candidatos/criar", this::autenticarAdminRequest);
 
         // ==================== INICIALIZAÇÃO DE SERVIÇOS ====================
 

@@ -24,7 +24,7 @@ public class EleicaoController implements IApiController {
     public void registerRoutes(Gson gson) {
         // Agrupa rotas relacionadas a eleições e candidatos
         // Essas rotas também devem ser protegidas pelo filtro de autenticação
-        path("/eleicao", () -> {
+        path("/eleicoes", () -> {
             post("/criar", (req, res) -> {
                 res.type("application/json");
                 String solicitanteId = req.attribute("adminId");
@@ -62,8 +62,8 @@ public class EleicaoController implements IApiController {
             });
         });
 
-        path("/candidato", () -> {
-            post("/cadastrar", (req, res) -> {
+        path("/candidatos", () -> {
+            post("/criar", (req, res) -> {
                 res.type("application/json");
                 String solicitanteId = req.attribute("adminId");
                 NovoCandidatoDTO candidatoDTO = gson.fromJson(req.body(), NovoCandidatoDTO.class);
@@ -75,11 +75,17 @@ public class EleicaoController implements IApiController {
                         candidatoDTO.getNome(),
                         candidatoDTO.getPartido(),
                         candidatoDTO.getCargo(),
-                        candidatoDTO.getUf()
+                        candidatoDTO.getUf(),
+                        candidatoDTO.getFotoUrl()
                 );
 
                 res.status(201);
                 return "{\"message\":\"Candidato cadastrado com sucesso!\"}";
+            });
+
+            get("/listar", (req, res) -> {
+                res.type("application/json");
+                return gson.toJson(servicoEleicao.listarCandidatos());
             });
         });
     }

@@ -11,16 +11,16 @@ public class Candidato {
     private String partido;
     private CargoCandidato cargo;
     private String uf;
-    private String foto;
+    private String fotoUrl;
 
-    public Candidato(String numero, String nome, String partido, String foto, CargoCandidato cargo, String uf) {
+    public Candidato(String numero, String nome, String partido, String foto, CargoCandidato cargo, String uf, String fotoUrl) {
         this.id = UUID.randomUUID().toString();
         this.numero = numero;
         this.nome = nome;
         this.partido = partido;
         this.cargo = cargo;
         this.uf = uf;
-        this.foto = foto;
+        this.fotoUrl = fotoUrl;
     }
 
     public String getId() {
@@ -47,7 +47,7 @@ public class Candidato {
         return uf;
     }
 
-    public String getFoto() {
-        return foto;
+    public String getFotoUrl() {
+        return fotoUrl;
     }
 }
