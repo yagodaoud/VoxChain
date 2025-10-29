@@ -5,6 +5,7 @@ import com.yagodaoud.VoxChain.modelo.enums.NivelAcessoAdmin;
 
 import java.io.Serializable;
 import java.security.MessageDigest;
+import java.util.UUID; // Importar UUID
 
 public class Administrador implements Serializable {
 
@@ -15,6 +16,14 @@ public class Administrador implements Serializable {
     private JurisdicaoAdmin jurisdicao;
     private boolean ativo;
 
+    public Administrador(String nome, String senha, NivelAcessoAdmin nivel, JurisdicaoAdmin jurisdicao) {
+        this.id = "ADM-" + UUID.randomUUID().toString(); // Gera um ID único e legível
+        this.nome = nome;
+        this.senhaHash = hashSenha(senha);
+        this.nivel = nivel;
+        this.jurisdicao = jurisdicao;
+        this.ativo = true;
+    }
 
     public Administrador(String id, String nome, String senha, NivelAcessoAdmin nivel, JurisdicaoAdmin jurisdicao) {
         this.id = id;

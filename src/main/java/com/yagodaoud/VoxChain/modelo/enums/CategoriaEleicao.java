@@ -1,6 +1,6 @@
 package com.yagodaoud.VoxChain.modelo.enums;
 
-public enum CargoCandidato {
+public enum CategoriaEleicao {
     PRESIDENTE,
     GOVERNADOR,
     SENADOR,

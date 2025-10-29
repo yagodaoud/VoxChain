@@ -105,7 +105,7 @@ public class BlockchainGovernamental implements Serializable {
         pool.marcarComoProcessadas(bloco.getTransacoes());
     }
 
-    private synchronized void minerarImediato() {
+    public synchronized void minerarImediato() {
         Bloco bloco = criarBlocoCandidato("TEST-NODE", null);
         if (bloco != null) {
             bloco.minerarBloco(getDificuldade());
@@ -184,6 +184,10 @@ public class BlockchainGovernamental implements Serializable {
 
     public Administrador buscarAdmin(String id) {
         return indices.buscarAdmin(id);
+    }
+
+    public Administrador buscarAdminPorNome(String nome) {
+        return indices.buscarAdminPorNome(nome);
     }
 
     public Eleitor buscarEleitor(String tituloHash) {

@@ -10,14 +10,21 @@ import java.util.List;
 public class ServicoAdministracao {
     private BlockchainGovernamental blockchain;
     private static final String SUPER_ADMIN_ID = "TSE-SUPER-001";
+    public static ServicoAdministracao instance;
 
     public ServicoAdministracao(BlockchainGovernamental blockchain) {
         this.blockchain = blockchain;
         inicializarSuperAdmin();
     }
 
-    // ==================== INICIALIZAÇÃO ====================
+    public static ServicoAdministracao getInstance(BlockchainGovernamental blockchain) {
+        if (instance == null) {
+            instance = new ServicoAdministracao(blockchain);
+        }
+        return instance;
+    }
 
+    // ==================== INICIALIZAÇÃO ====================
     private void inicializarSuperAdmin() {
         if (blockchain.buscarAdmin(SUPER_ADMIN_ID) == null) {
             long TIMESTAMP_SUPER_ADMIN = 1700000000000L;
@@ -46,7 +53,6 @@ public class ServicoAdministracao {
     }
 
     // ==================== VALIDAÇÕES ====================
-
     public boolean temPermissao(String adminId, TipoTransacao tipoTransacao) {
         Administrador admin = blockchain.buscarAdmin(adminId);
 
@@ -55,62 +61,52 @@ public class ServicoAdministracao {
             return false;
         }
 
-        // Super admin pode tudo
         if (admin.getNivel() == NivelAcessoAdmin.SUPER_ADMIN) {
             return true;
         }
 
-        // ADMIN_TSE pode criar eleições na sua jurisdição
         if (admin.getNivel() == NivelAcessoAdmin.ADMIN_TSE) {
             return tipoTransacao == TipoTransacao.CRIACAO_ELEICAO ||
                     tipoTransacao == TipoTransacao.INICIO_ELEICAO ||
                     tipoTransacao == TipoTransacao.FIM_ELEICAO;
         }
 
-        // OPERADOR só pode consultar (não precisa de permissão para escrita)
         return false;
     }
 
     // ==================== CADASTRO DE ADMINS ====================
-
-    public void cadastrarNovoAdmin(
+    public Administrador cadastrarNovoAdmin(
             String solicitanteId,
-            String novoAdminId,
             String nome,
+            String senha,
             NivelAcessoAdmin nivel,
             JurisdicaoAdmin jurisdicao) {
 
-        // 1. Valida permissão do solicitante
         if (!temPermissao(solicitanteId, TipoTransacao.CADASTRO_ADMIN)) {
             throw new SecurityException(
                     "Admin " + solicitanteId + " não tem permissão para criar novos admins"
             );
         }
 
-        // 2. Valida se admin já existe
-        if (blockchain.buscarAdmin(novoAdminId) != null) {
+        if (blockchain.buscarAdminPorNome(nome) != null) {
             throw new IllegalArgumentException(
-                    "Admin com ID " + novoAdminId + " já existe"
+                    "Admin com Nome " + nome + " já existe"
             );
         }
 
-        // 3. Valida jurisdição
         if (nivel == NivelAcessoAdmin.ADMIN_TSE && jurisdicao == null) {
             throw new IllegalArgumentException(
                     "ADMIN_TSE deve ter uma jurisdição definida"
             );
         }
 
-        // 4. Cria novo admin
         Administrador novoAdmin = new Administrador(
-                novoAdminId,
                 nome,
-                gerarSenhaTemporaria(),
+                senha,
                 nivel,
                 jurisdicao != null ? jurisdicao : JurisdicaoAdmin.NACIONAL
         );
 
-        // 5. Cria e registra transação
         Transacao t = new Transacao(
                 TipoTransacao.CADASTRO_ADMIN,
                 novoAdmin,
@@ -119,16 +115,12 @@ public class ServicoAdministracao {
 
         blockchain.adicionarAoPool(t);
 
-        System.out.println("[ADMIN] Novo admin cadastrado:");
-        System.out.println("  ID: " + novoAdminId);
-        System.out.println("  Nome: " + nome);
-        System.out.println("  Nível: " + nivel);
-        System.out.println("  Jurisdição: " + jurisdicao);
-        System.out.println("  Criado por: " + solicitanteId);
+        System.out.println("[ADMIN] Novo admin cadastrado com ID: " + novoAdmin.getId());
+
+        return novoAdmin;
     }
 
     // ==================== GERENCIAMENTO DE ADMINS ====================
-
     public void desativarAdmin(String solicitanteId, String adminId) {
         if (!temPermissao(solicitanteId, TipoTransacao.CADASTRO_ADMIN)) {
             throw new SecurityException(
@@ -159,42 +151,6 @@ public class ServicoAdministracao {
 
         admin.ativar();
         System.out.println("[ADMIN] Admin ativado: " + adminId);
-    }
-
-    // ==================== CRIAÇÃO DE ELEIÇÕES ====================
-
-    public void criarEleicao(
-            String solicitanteId,
-            String descricao,
-            long dataInicio,
-            long dataFim) {
-
-        if (!temPermissao(solicitanteId, TipoTransacao.CRIACAO_ELEICAO)) {
-            throw new SecurityException(
-                    "Admin " + solicitanteId + " não tem permissão para criar eleições"
-            );
-        }
-
-        if (dataFim <= dataInicio) {
-            throw new IllegalArgumentException(
-                    "Data de fim deve ser após data de início"
-            );
-        }
-
-        Eleicao eleicao = new Eleicao(descricao, dataInicio, dataFim);
-
-        Transacao t = new Transacao(
-                TipoTransacao.CRIACAO_ELEICAO,
-                eleicao,
-                solicitanteId
-        );
-
-        blockchain.adicionarAoPool(t);
-
-        System.out.println("[ELEIÇÃO] Nova eleição criada:");
-        System.out.println("  ID: " + eleicao.getId());
-        System.out.println("  Descrição: " + descricao);
-        System.out.println("  Criada por: " + solicitanteId);
     }
 
     // ==================== UTILITÁRIOS ====================
