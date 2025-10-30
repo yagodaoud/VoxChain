@@ -1,19 +1,20 @@
 package com.yagodaoud.VoxChain.rede;
 
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.gson.Gson;
 import com.yagodaoud.VoxChain.blockchain.No;
 import com.yagodaoud.VoxChain.blockchain.servicos.ServicoAdministracao;
 import com.yagodaoud.VoxChain.blockchain.servicos.eleicao.ServicoEleicao;
 import com.yagodaoud.VoxChain.modelo.Administrador;
-import com.yagodaoud.VoxChain.rede.api.v1.AdminController;
-import com.yagodaoud.VoxChain.rede.api.v1.BlockchainController;
-import com.yagodaoud.VoxChain.rede.api.v1.EleicaoController;
-import com.yagodaoud.VoxChain.rede.api.v1.IApiController;
-import com.yagodaoud.VoxChain.rede.api.v1.NetworkController;
+import com.yagodaoud.VoxChain.rede.api.v1.*;
+import com.yagodaoud.VoxChain.utils.SecurityUtils;
 import spark.Spark;
 
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static spark.Spark.*;
@@ -31,6 +32,8 @@ public class ApiServidor {
 
     private final No no;
     private NetworkMonitor monitor;
+
+    private final Gson gson = new Gson();
 
     public ApiServidor(No no) {
         this.no = no;
@@ -52,7 +55,7 @@ public class ApiServidor {
         // ==================== MIDDLEWARE E FILTROS ====================
 
         // Aplica o filtro de autenticação a todas as rotas que exigem privilégios de administrador.
-        before("/api/v1/admin/*", this::autenticarAdminRequest);
+        before("/api/v1/admin/*", this::autenticarSuperAdminRequest);
         before("/api/v1/eleicoes/criar", this::autenticarAdminRequest);
         before("/api/v1/candidatos/criar", this::autenticarAdminRequest);
 
@@ -69,7 +72,10 @@ public class ApiServidor {
                 new AdminController(servicoAdmin),
                 new EleicaoController(servicoEleicao, servicoAdmin),
                 new BlockchainController(no),
-                new NetworkController(no, monitor)
+                new NetworkController(no, monitor),
+                new LoginController(no),
+                new CandidatoController(servicoEleicao, servicoAdmin),
+                new VotoController(servicoEleicao, servicoAdmin)
         );
 
         // Define um prefixo global para todas as rotas da API versionada.
@@ -102,50 +108,74 @@ public class ApiServidor {
     }
 
     /**
-     * Middleware de autenticação que processa o header "Authorization" (Basic Auth).
-     * Se a autenticação for bem-sucedida, o ID do admin é anexado à requisição.
-     * Caso contrário, a requisição é interrompida com um status 401 Unauthorized.
+     * Middleware para autenticar requisições via JWT
+     * Extrai o token do header Authorization e valida
      */
-    private void autenticarAdminRequest(spark.Request req, spark.Response res) {
-        Optional<String> adminIdAutenticado = autenticarViaBasicHeader(req.headers("Authorization"));
+    private void autenticarRequest(spark.Request req, spark.Response res) {
+        String authHeader = req.headers("Authorization");
 
-        if (adminIdAutenticado.isEmpty()) {
-            halt(401, "{\"error\":\"Autenticação falhou ou é necessária.\"}");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            halt(401, gson.toJson(Map.of(
+                    "error", "Token de autenticação não fornecido",
+                    "message", "Use o header: Authorization: Bearer <token>"
+            )));
         }
 
-        // Anexa o ID do admin à requisição para que os controllers possam usá-lo.
-        req.attribute("adminId", adminIdAutenticado.get());
+        String token = authHeader.substring(7); // Remove "Bearer "
+
+        try {
+            DecodedJWT jwt = SecurityUtils.verificarToken(token);
+
+            // Extrai informações do token
+            String cpfHash = jwt.getSubject();
+            String tipo = jwt.getClaim("nivelAcesso").asString();
+//            String nome = jwt.getClaim("nome").asString();
+
+            // Anexa à requisição para uso nos controllers
+            req.attribute("cpfHash", cpfHash);
+            req.attribute("nivelAcesso", tipo);
+            req.attribute("userNome", cpfHash);
+
+        } catch (JWTVerificationException e) {
+            halt(401, gson.toJson(Map.of(
+                    "error", "Token inválido ou expirado",
+                    "message", e.getMessage()
+            )));
+        }
     }
 
     /**
-     * Valida as credenciais do cabeçalho de Autorização (Basic Auth) contra a blockchain.
-     * @param authHeader Conteúdo do cabeçalho "Authorization".
-     * @return Um Optional contendo o ID do admin se a autenticação for bem-sucedida.
+     * Middleware específico para rotas administrativas
+     * Verifica se o usuário tem permissão de admin
      */
-    private Optional<String> autenticarViaBasicHeader(String authHeader) {
-        if (authHeader == null || !authHeader.toLowerCase().startsWith("basic ")) {
-            return Optional.empty();
+    private void autenticarAdminRequest(spark.Request req, spark.Response res) {
+        // Primeiro autentica o token
+        autenticarRequest(req, res);
+
+        // Depois verifica se é admin
+        String tipo = req.attribute("nivelAcesso").toString().toLowerCase();
+
+        if (!"admin".equals(tipo) && !"super_admin".equals(tipo)) {
+            halt(403, gson.toJson(Map.of(
+                    "error", "Acesso negado",
+                    "message", "Apenas administradores podem acessar este recurso"
+            )));
         }
-        try {
-            String base64Credentials = authHeader.substring("Basic".length()).trim();
-            byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
-            String credentials = new String(credDecoded); // Formato "id:senha"
+    }
 
-            final String[] values = credentials.split(":", 2);
-            if (values.length != 2) return Optional.empty();
+    /**
+     * Middleware para super-admin apenas
+     */
+    private void autenticarSuperAdminRequest(spark.Request req, spark.Response res) {
+        autenticarRequest(req, res);
 
-            String adminId = values[0];
-            String senha = values[1];
+        String tipo = req.attribute("nivelAcesso");
 
-            Administrador admin = no.getBlockchain().buscarAdmin(adminId);
-            // Verifica se o admin existe, se a senha confere e se a conta está ativa.
-            if (admin != null && admin.verificarSenha(senha) && admin.isAtivo()) {
-                return Optional.of(adminId); // Sucesso!
-            }
-        } catch (Exception e) {
-            // Se houver qualquer erro (ex: Base64 malformado), a autenticação falha.
-            return Optional.empty();
+        if (!"super-admin".equals(tipo)) {
+            halt(403, gson.toJson(Map.of(
+                    "error", "Acesso negado",
+                    "message", "Apenas super administradores podem acessar este recurso"
+            )));
         }
-        return Optional.empty();
     }
 }

@@ -9,7 +9,6 @@ import com.yagodaoud.VoxChain.modelo.*;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Classe principal da Blockchain Governamental.
@@ -186,12 +185,12 @@ public class BlockchainGovernamental implements Serializable {
         return indices.buscarAdmin(id);
     }
 
-    public Administrador buscarAdminPorNome(String nome) {
-        return indices.buscarAdminPorNome(nome);
+    public Administrador buscarAdminPorCpfHash(String cpf) {
+        return indices.buscarAdminPorCpfHash(cpf);
     }
 
-    public Eleitor buscarEleitor(String tituloHash) {
-        return indices.buscarEleitor(tituloHash);
+    public Eleitor buscarEleitor(String cpfHash) {
+        return indices.buscarEleitor(cpfHash);
     }
 
     public Candidato buscarCandidato(String numero) {
@@ -212,6 +211,10 @@ public class BlockchainGovernamental implements Serializable {
 
     public List<Candidato> listarCandidatos() {
         return indices.listarCandidatos();
+    }
+
+    public List<Candidato> listarCandidatos(String eleicaoId) {
+        return indices.listarCandidatos(eleicaoId);
     }
 
     public List<Eleicao> listarEleicoes() {

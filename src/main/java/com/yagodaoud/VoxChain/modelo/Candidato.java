@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public class Candidato {
     private String id;
+    private String eleicaoId;
     private String numero;
     private String nome;
     private String partido;
@@ -13,8 +14,9 @@ public class Candidato {
     private String uf;
     private String fotoUrl;
 
-    public Candidato(String numero, String nome, String partido, String foto, CargoCandidato cargo, String uf, String fotoUrl) {
+    public Candidato(String eleicaoId, String numero, String nome, String partido, CargoCandidato cargo, String uf, String fotoUrl) {
         this.id = UUID.randomUUID().toString();
+        this.eleicaoId = eleicaoId;
         this.numero = numero;
         this.nome = nome;
         this.partido = partido;
@@ -26,6 +28,8 @@ public class Candidato {
     public String getId() {
         return id;
     }
+
+    public String getEleicaoId() { return eleicaoId; }
 
     public String getNumero() {
         return numero;

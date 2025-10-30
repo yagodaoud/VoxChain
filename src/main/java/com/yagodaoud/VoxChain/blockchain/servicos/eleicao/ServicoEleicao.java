@@ -26,10 +26,10 @@ public class ServicoEleicao {
         return blockchain.listarEleicoes();
     }
 
-    public Eleicao criarEleicao(String solicitanteId, String nome, String descricao, List<CategoriaEleicao> categorias, long dataInicio, long dataFim) {
-        if (!servicoAdministracao.temPermissao(solicitanteId, TipoTransacao.CRIACAO_ELEICAO)) {
+    public Eleicao criarEleicao(String cpfHash, String nome, String descricao, List<CategoriaEleicao> categorias, long dataInicio, long dataFim) {
+        if (!servicoAdministracao.temPermissao(cpfHash, TipoTransacao.CRIACAO_ELEICAO)) {
             throw new SecurityException(
-                    "Admin " + solicitanteId + " não tem permissão para criar eleições"
+                    "Admin " + cpfHash + " não tem permissão para criar eleições"
             );
         }
 
@@ -38,7 +38,7 @@ public class ServicoEleicao {
         }
 
         Eleicao novaEleicao = new Eleicao(nome, descricao, categorias, dataInicio, dataFim);
-        Transacao transacao = new Transacao(TipoTransacao.CRIACAO_ELEICAO, novaEleicao, solicitanteId);
+        Transacao transacao = new Transacao(TipoTransacao.CRIACAO_ELEICAO, novaEleicao, cpfHash);
         blockchain.adicionarAoPool(transacao);
 
         return novaEleicao;
@@ -58,13 +58,17 @@ public class ServicoEleicao {
         return blockchain.listarCandidatos();
     }
 
+    public List<Candidato> listarCandidatos(String eleicaoId) {
+        return blockchain.listarCandidatos(eleicaoId);
+    }
+
     public Candidato cadastrarCandidato(String solicitanteId, String eleicaoId, String numero, String nome, String partido, CargoCandidato cargo, String uf, String fotoUrl) {
         Eleicao eleicao = blockchain.buscarEleicao(eleicaoId);
         if (eleicao == null) {
             throw new IllegalArgumentException("Eleição não encontrada para cadastrar candidato.");
         }
 
-        Candidato novoCandidato = new Candidato(numero, nome, partido, "URL_FOTO_PADRAO", cargo, uf, fotoUrl);
+        Candidato novoCandidato = new Candidato(eleicaoId, numero, nome, partido, cargo, uf, fotoUrl);
         Transacao transacao = new Transacao(TipoTransacao.CADASTRO_CANDIDATO, novoCandidato, solicitanteId);
         blockchain.adicionarAoPool(transacao);
 

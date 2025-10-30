@@ -1,7 +1,7 @@
 package com.yagodaoud.VoxChain.modelo;
 
 import com.yagodaoud.VoxChain.modelo.enums.JurisdicaoAdmin;
-import com.yagodaoud.VoxChain.modelo.enums.NivelAcessoAdmin;
+import com.yagodaoud.VoxChain.modelo.enums.NivelAcesso;
 
 import java.io.Serializable;
 import java.security.MessageDigest;
@@ -10,24 +10,24 @@ import java.util.UUID; // Importar UUID
 public class Administrador implements Serializable {
 
     private String id;
-    private String nome;
+    private String hashCpf;
     private String senhaHash;
-    private NivelAcessoAdmin nivel;
+    private NivelAcesso nivel;
     private JurisdicaoAdmin jurisdicao;
     private boolean ativo;
 
-    public Administrador(String nome, String senha, NivelAcessoAdmin nivel, JurisdicaoAdmin jurisdicao) {
-        this.id = "ADM-" + UUID.randomUUID().toString(); // Gera um ID único e legível
-        this.nome = nome;
+    public Administrador(String cpf, String senha, NivelAcesso nivel, JurisdicaoAdmin jurisdicao) {
+        this.id = "ADM-" + UUID.randomUUID(); // Gera um ID único e legível
+        this.hashCpf = Eleitor.hashCpf(cpf);
         this.senhaHash = hashSenha(senha);
         this.nivel = nivel;
         this.jurisdicao = jurisdicao;
         this.ativo = true;
     }
 
-    public Administrador(String id, String nome, String senha, NivelAcessoAdmin nivel, JurisdicaoAdmin jurisdicao) {
+    public Administrador(String id, String cpf, String senha, NivelAcesso nivel, JurisdicaoAdmin jurisdicao) {
         this.id = id;
-        this.nome = nome;
+        this.hashCpf = Eleitor.hashCpf(cpf);
         this.senhaHash = hashSenha(senha);
         this.nivel = nivel;
         this.jurisdicao = jurisdicao;
@@ -59,15 +59,15 @@ public class Administrador implements Serializable {
         return id;
     }
 
-    public String getNome() {
-        return nome;
+    public String getHashCpf() {
+        return hashCpf;
     }
 
     public String getSenhaHash() {
         return senhaHash;
     }
 
-    public NivelAcessoAdmin getNivel() {
+    public NivelAcesso getNivel() {
         return nivel;
     }
 

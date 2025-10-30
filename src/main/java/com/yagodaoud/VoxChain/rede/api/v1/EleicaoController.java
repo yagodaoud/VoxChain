@@ -27,12 +27,12 @@ public class EleicaoController implements IApiController {
         path("/eleicoes", () -> {
             post("/criar", (req, res) -> {
                 res.type("application/json");
-                String solicitanteId = req.attribute("adminId");
+                String cpfHash = req.attribute("cpfHash");
                 NovaEleicaoDTO eleicaoDTO = gson.fromJson(req.body(), NovaEleicaoDTO.class);
 
-                // O servicoEleicao precisará do solicitanteId para validar permissões
-                servicoEleicao.criarEleicao(
-                        solicitanteId,
+                // O servicoEleicao precisará do cpfHash para validar permissões
+                Eleicao eleicao = servicoEleicao.criarEleicao(
+                        cpfHash,
                         eleicaoDTO.getNome(),
                         eleicaoDTO.getDescricao(),
                         eleicaoDTO.getCategorias(),
@@ -41,7 +41,7 @@ public class EleicaoController implements IApiController {
                 );
 
                 res.status(201);
-                return "{\"message\":\"Eleição criada e registrada na blockchain.\"}";
+                return gson.toJson(eleicao);
             });
 
 
@@ -59,33 +59,6 @@ public class EleicaoController implements IApiController {
                 }
 
                 return gson.toJson(eleicoes);
-            });
-        });
-
-        path("/candidatos", () -> {
-            post("/criar", (req, res) -> {
-                res.type("application/json");
-                String solicitanteId = req.attribute("adminId");
-                NovoCandidatoDTO candidatoDTO = gson.fromJson(req.body(), NovoCandidatoDTO.class);
-
-                servicoEleicao.cadastrarCandidato(
-                        solicitanteId,
-                        candidatoDTO.getEleicaoId(),
-                        candidatoDTO.getNumero(),
-                        candidatoDTO.getNome(),
-                        candidatoDTO.getPartido(),
-                        candidatoDTO.getCargo(),
-                        candidatoDTO.getUf(),
-                        candidatoDTO.getFotoUrl()
-                );
-
-                res.status(201);
-                return "{\"message\":\"Candidato cadastrado com sucesso!\"}";
-            });
-
-            get("/listar", (req, res) -> {
-                res.type("application/json");
-                return gson.toJson(servicoEleicao.listarCandidatos());
             });
         });
     }

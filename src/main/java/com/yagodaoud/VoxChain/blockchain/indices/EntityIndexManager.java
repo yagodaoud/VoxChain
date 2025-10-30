@@ -2,10 +2,10 @@ package com.yagodaoud.VoxChain.blockchain.indices;
 
 import com.yagodaoud.VoxChain.blockchain.Bloco;
 import com.yagodaoud.VoxChain.modelo.*;
-import com.yagodaoud.VoxChain.modelo.enums.TipoTransacao;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Gerencia todos os índices para consulta rápida de entidades.
@@ -99,15 +99,15 @@ public class EntityIndexManager {
         return admins.get(id);
     }
 
-    public Administrador buscarAdminPorNome(String nome) {
+    public Administrador buscarAdminPorCpfHash(String cpf) {
         return admins.values().stream()
-                .filter(admin -> admin.getNome().equals(nome))
+                .filter(admin -> admin.getHashCpf().equals(cpf))
                 .findFirst()
                 .orElse(null);
     }
 
-    public Eleitor buscarEleitor(String tituloHash) {
-        return eleitores.get(tituloHash);
+    public Eleitor buscarEleitor(String cpfHash) {
+        return eleitores.get(cpfHash);
     }
 
     public Candidato buscarCandidato(String numero) {
@@ -128,6 +128,12 @@ public class EntityIndexManager {
 
     public List<Candidato> listarCandidatos() {
         return new ArrayList<>(candidatos.values());
+    }
+
+    public List<Candidato> listarCandidatos(String eleicaoId) {
+        return candidatos.values().stream()
+                .filter(candidato -> candidato.getEleicaoId().equals(eleicaoId))
+                .collect(Collectors.toList());
     }
 
     public List<Eleicao> listarEleicoes() {

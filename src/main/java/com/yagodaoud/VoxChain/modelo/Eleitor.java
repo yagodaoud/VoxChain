@@ -1,23 +1,34 @@
 package com.yagodaoud.VoxChain.modelo;
 
+import com.yagodaoud.VoxChain.utils.SecurityUtils;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class Eleitor {
-    private String tituloHash;
+    private String cpfHash;
     private int zona;
     private int secao;
 
+    private static final String salt = "ELeicao2025";
 
-    public Eleitor(String tituloDeEleitor, int zona, int secao) {
-        this.tituloHash = hashTitulo(tituloDeEleitor);
+    public Eleitor(String cpf, int zona, int secao) {
+        this.cpfHash = hashCpf(cpf);
         this.zona = zona;
         this.secao = secao;
     }
 
+    public static String hashCpf(String cpf) {
+        return SecurityUtils.hash(cpf, salt);
+    }
+
+    public String getCpfHash() {
+        return cpfHash;
+    }
+
     public String getTituloDeEleitorHash() {
-        return tituloHash;
+        return cpfHash;
     }
 
     public int getZona() {
@@ -26,23 +37,5 @@ public class Eleitor {
 
     public int getSecao() {
         return secao;
-    }
-
-
-    private String hashTitulo(String titulo) {
-        try {
-            String salt = "ELeicao2025"; // Pode vir de config global
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest((salt + titulo).getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
-                hexString.append(hex);
-            }
-            return hexString.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
     }
 }
