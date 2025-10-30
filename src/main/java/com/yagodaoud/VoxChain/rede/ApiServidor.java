@@ -7,6 +7,7 @@ import com.google.gson.Gson;
 import com.yagodaoud.VoxChain.blockchain.No;
 import com.yagodaoud.VoxChain.blockchain.servicos.ServicoAdministracao;
 import com.yagodaoud.VoxChain.blockchain.servicos.eleicao.ServicoEleicao;
+import com.yagodaoud.VoxChain.blockchain.servicos.ServicoEleitor;
 import com.yagodaoud.VoxChain.modelo.Administrador;
 import com.yagodaoud.VoxChain.rede.api.v1.*;
 import com.yagodaoud.VoxChain.utils.SecurityUtils;
@@ -58,12 +59,14 @@ public class ApiServidor {
         before("/api/v1/admin/*", this::autenticarSuperAdminRequest);
         before("/api/v1/eleicoes/criar", this::autenticarAdminRequest);
         before("/api/v1/candidatos/criar", this::autenticarAdminRequest);
+        before("/api/v1/eleitores/criar", this::autenticarAdminRequest);
 
         // ==================== INICIALIZAÇÃO DE SERVIÇOS ====================
 
         // Instancia os serviços que contêm a lógica de negócio.
         ServicoAdministracao servicoAdmin = new ServicoAdministracao(no.getBlockchain());
         ServicoEleicao servicoEleicao = new ServicoEleicao(no.getBlockchain(), servicoAdmin);
+        ServicoEleitor servicoEleitor = new ServicoEleitor(no.getBlockchain());
 
         // ==================== REGISTRO DE CONTROLLERS ====================
 
@@ -75,7 +78,8 @@ public class ApiServidor {
                 new NetworkController(no, monitor),
                 new LoginController(no),
                 new CandidatoController(servicoEleicao, servicoAdmin),
-                new VotoController(servicoEleicao, servicoAdmin)
+                new VotoController(servicoEleicao, servicoAdmin),
+                new EleitorController(servicoEleitor)
         );
 
         // Define um prefixo global para todas as rotas da API versionada.
