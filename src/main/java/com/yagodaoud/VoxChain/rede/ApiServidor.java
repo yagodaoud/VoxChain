@@ -73,7 +73,9 @@ public class ApiServidor {
                 new EleicaoController(servicoEleicao, servicoAdmin),
                 new BlockchainController(no),
                 new NetworkController(no, monitor),
-                new LoginController(no)
+                new LoginController(no),
+                new CandidatoController(servicoEleicao, servicoAdmin),
+                new VotoController(servicoEleicao, servicoAdmin)
         );
 
         // Define um prefixo global para todas as rotas da API versionada.

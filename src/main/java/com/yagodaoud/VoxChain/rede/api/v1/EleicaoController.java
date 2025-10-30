@@ -61,38 +61,5 @@ public class EleicaoController implements IApiController {
                 return gson.toJson(eleicoes);
             });
         });
-
-        path("/candidatos", () -> {
-            post("/criar", (req, res) -> {
-                res.type("application/json");
-                String solicitanteId = req.attribute("adminId");
-                NovoCandidatoDTO candidatoDTO = gson.fromJson(req.body(), NovoCandidatoDTO.class);
-
-                servicoEleicao.cadastrarCandidato(
-                        solicitanteId,
-                        candidatoDTO.getEleicaoId(),
-                        candidatoDTO.getNumero(),
-                        candidatoDTO.getNome(),
-                        candidatoDTO.getPartido(),
-                        candidatoDTO.getCargo(),
-                        candidatoDTO.getUf(),
-                        candidatoDTO.getFotoUrl()
-                );
-
-                res.status(201);
-                return "{\"message\":\"Candidato cadastrado com sucesso!\"}";
-            });
-
-            get("/listar", (req, res) -> {
-                res.type("application/json");
-                String eleicaoId = req.queryParams("eleicaoId");
-
-                if (eleicaoId != null) {
-                    return gson.toJson(servicoEleicao.listarCandidatos(eleicaoId));
-                }
-
-                return gson.toJson(servicoEleicao.listarCandidatos());
-            });
-        });
     }
 }
