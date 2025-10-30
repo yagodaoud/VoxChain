@@ -213,6 +213,10 @@ public class BlockchainGovernamental implements Serializable {
         return indices.listarCandidatos();
     }
 
+    public List<Candidato> listarCandidatos(String eleicaoId) {
+        return indices.listarCandidatos(eleicaoId);
+    }
+
     public List<Eleicao> listarEleicoes() {
         return indices.listarEleicoes();
     }

@@ -58,6 +58,10 @@ public class ServicoEleicao {
         return blockchain.listarCandidatos();
     }
 
+    public List<Candidato> listarCandidatos(String eleicaoId) {
+        return blockchain.listarCandidatos(eleicaoId);
+    }
+
     public Candidato cadastrarCandidato(String solicitanteId, String eleicaoId, String numero, String nome, String partido, CargoCandidato cargo, String uf, String fotoUrl) {
         Eleicao eleicao = blockchain.buscarEleicao(eleicaoId);
         if (eleicao == null) {

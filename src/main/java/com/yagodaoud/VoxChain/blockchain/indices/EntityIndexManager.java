@@ -5,6 +5,7 @@ import com.yagodaoud.VoxChain.modelo.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Gerencia todos os índices para consulta rápida de entidades.
@@ -127,6 +128,12 @@ public class EntityIndexManager {
 
     public List<Candidato> listarCandidatos() {
         return new ArrayList<>(candidatos.values());
+    }
+
+    public List<Candidato> listarCandidatos(String eleicaoId) {
+        return candidatos.values().stream()
+                .filter(candidato -> candidato.getEleicaoId().equals(eleicaoId))
+                .collect(Collectors.toList());
     }
 
     public List<Eleicao> listarEleicoes() {

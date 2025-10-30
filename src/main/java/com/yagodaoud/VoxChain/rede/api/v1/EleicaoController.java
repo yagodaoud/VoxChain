@@ -41,7 +41,7 @@ public class EleicaoController implements IApiController {
                 );
 
                 res.status(201);
-                return "{\"eleicao\": " + gson.toJson(eleicao) + "}";
+                return gson.toJson(eleicao);
             });
 
 
@@ -85,6 +85,12 @@ public class EleicaoController implements IApiController {
 
             get("/listar", (req, res) -> {
                 res.type("application/json");
+                String eleicaoId = req.queryParams("eleicaoId");
+
+                if (eleicaoId != null) {
+                    return gson.toJson(servicoEleicao.listarCandidatos(eleicaoId));
+                }
+
                 return gson.toJson(servicoEleicao.listarCandidatos());
             });
         });
