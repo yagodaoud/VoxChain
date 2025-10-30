@@ -32,7 +32,7 @@ public class ServicoAdministracao {
             Administrador superAdmin = new Administrador(
                     SUPER_ADMIN_ID,
                     "11111111111",
-                    "senha-super-admin-temporaria",
+                    "superadmin",
                     NivelAcesso.SUPER_ADMIN,
                     JurisdicaoAdmin.NACIONAL
             );

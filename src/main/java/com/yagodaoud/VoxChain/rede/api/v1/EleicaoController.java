@@ -31,7 +31,7 @@ public class EleicaoController implements IApiController {
                 NovaEleicaoDTO eleicaoDTO = gson.fromJson(req.body(), NovaEleicaoDTO.class);
 
                 // O servicoEleicao precisará do cpfHash para validar permissões
-                servicoEleicao.criarEleicao(
+                Eleicao eleicao = servicoEleicao.criarEleicao(
                         cpfHash,
                         eleicaoDTO.getNome(),
                         eleicaoDTO.getDescricao(),
@@ -41,7 +41,7 @@ public class EleicaoController implements IApiController {
                 );
 
                 res.status(201);
-                return "{\"message\":\"Eleição criada e registrada na blockchain.\"}";
+                return "{\"eleicao\": " + gson.toJson(eleicao) + "}";
             });
 
 

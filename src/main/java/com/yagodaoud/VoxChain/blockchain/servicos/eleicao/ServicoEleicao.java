@@ -64,7 +64,7 @@ public class ServicoEleicao {
             throw new IllegalArgumentException("Eleição não encontrada para cadastrar candidato.");
         }
 
-        Candidato novoCandidato = new Candidato(numero, nome, partido, "URL_FOTO_PADRAO", cargo, uf, fotoUrl);
+        Candidato novoCandidato = new Candidato(eleicaoId, numero, nome, partido, cargo, uf, fotoUrl);
         Transacao transacao = new Transacao(TipoTransacao.CADASTRO_CANDIDATO, novoCandidato, solicitanteId);
         blockchain.adicionarAoPool(transacao);
 
