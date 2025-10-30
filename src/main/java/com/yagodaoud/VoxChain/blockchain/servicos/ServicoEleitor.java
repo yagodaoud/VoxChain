@@ -15,7 +15,7 @@ public class ServicoEleitor {
         this.blockchain = blockchain;
     }
 
-    public Eleitor cadastrarEleitor(String solicitanteCpfHash, String cpf, int zona, int secao) {
+    public Eleitor cadastrarEleitor(String solicitanteCpfHash, String cpf, String senha,  int zona, int secao) {
         Administrador admin = blockchain.buscarAdminPorCpfHash(solicitanteCpfHash);
         if (admin == null || !admin.isAtivo()) {
             throw new SecurityException("Apenas administradores podem cadastrar eleitores");
@@ -26,7 +26,7 @@ public class ServicoEleitor {
             throw new IllegalArgumentException("Eleitor já cadastrado");
         }
 
-        Eleitor eleitor = new Eleitor(cpf, zona, secao);
+        Eleitor eleitor = new Eleitor(cpf, senha, zona, secao);
 
         Transacao t = new Transacao(
                 TipoTransacao.CADASTRO_ELEITOR,

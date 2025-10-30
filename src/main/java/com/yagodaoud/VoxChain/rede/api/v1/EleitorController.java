@@ -25,6 +25,7 @@ public class EleitorController implements IApiController {
                 servicoEleitor.cadastrarEleitor(
                         solicitanteCpfHash,
                         dto.getCpf(),
+                        dto.getSenha(),
                         dto.getZona(),
                         dto.getSecao()
                 );

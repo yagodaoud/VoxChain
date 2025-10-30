@@ -34,7 +34,7 @@ public class Administrador implements Serializable {
         this.ativo = true;
     }
 
-    private String hashSenha(String senha) {
+    public static String hashSenha(String senha) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(senha.getBytes("UTF-8"));
