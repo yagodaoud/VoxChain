@@ -35,13 +35,19 @@ public class Transacao implements Serializable {
     public <T> Transacao(TipoTransacao tipo, T payloadObject, String idOrigem) {
         this.timestamp = Instant.now().toEpochMilli();
         this.tipo = tipo;
-        this.idOrigem = idOrigem;
+        
+        // Para votos, usa 'ANONIMO' ao invés do idOrigem para garantir anonimato
+        if (tipo == TipoTransacao.VOTO) {
+            this.idOrigem = "ANONIMO";
+        } else {
+            this.idOrigem = idOrigem;
+        }
 
         // ★ Converte objeto para JSON automaticamente
         this.payload = gson.toJson(payloadObject);
 
         // ★ Gera ID único
-        this.id = gerarIdUnico(idOrigem, tipo, this.timestamp, false);
+        this.id = gerarIdUnico(this.idOrigem, tipo, this.timestamp, false);
     }
 
     // ============ GERAÇÃO DE ID ============
