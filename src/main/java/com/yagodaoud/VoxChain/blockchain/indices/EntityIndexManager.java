@@ -106,8 +106,22 @@ public class EntityIndexManager {
                 .orElse(null);
     }
 
+    public Administrador buscarAdminPorCpfHashESenhaHash(String cpfHash, String senhaHash) {
+        return admins.values().stream()
+                .filter(admin -> admin.getHashCpf().equals(cpfHash) && admin.getSenhaHash().equals(senhaHash))
+                .findFirst()
+                .orElse(null);
+    }
+
     public Eleitor buscarEleitor(String cpfHash) {
         return eleitores.get(cpfHash);
+    }
+
+    public Eleitor buscarEleitorPorCpfHashESenhaHash(String cpfHash, String senhaHash) {
+        return eleitores.values().stream()
+                .filter(eleitor -> eleitor.getCpfHash().equals(cpfHash) && eleitor.getSenhaHash().equals(senhaHash))
+                .findFirst()
+                .orElse(null);
     }
 
     public Candidato buscarCandidato(String numero) {

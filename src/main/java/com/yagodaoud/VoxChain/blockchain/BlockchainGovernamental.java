@@ -189,8 +189,16 @@ public class BlockchainGovernamental implements Serializable {
         return indices.buscarAdminPorCpfHash(cpf);
     }
 
+    public Administrador buscarAdminPorCpfHashESenhaHash(String cpfHash, String senhaHash) {
+        return indices.buscarAdminPorCpfHashESenhaHash(cpfHash, senhaHash);
+    }
+
     public Eleitor buscarEleitor(String cpfHash) {
         return indices.buscarEleitor(cpfHash);
+    }
+
+    public Eleitor buscarEleitorPorCpfHashESenhaHash(String cpfHash, String senhaHash) {
+        return indices.buscarEleitorPorCpfHashESenhaHash(cpfHash, senhaHash);
     }
 
     public Candidato buscarCandidato(String numero) {
