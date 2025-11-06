@@ -2,6 +2,7 @@ package com.yagodaoud.VoxChain.blockchain.indices;
 
 import com.yagodaoud.VoxChain.blockchain.Bloco;
 import com.yagodaoud.VoxChain.modelo.*;
+import com.yagodaoud.VoxChain.utils.SecurityUtils;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -106,9 +107,10 @@ public class EntityIndexManager {
                 .orElse(null);
     }
 
-    public Administrador buscarAdminPorCpfHashESenhaHash(String cpfHash, String senhaHash) {
+    public Administrador buscarAdminPorCpfHashESenhaHash(String cpfHash, String senha) {
         return admins.values().stream()
-                .filter(admin -> admin.getHashCpf().equals(cpfHash) && admin.getSenhaHash().equals(senhaHash))
+                .filter(admin -> admin.getHashCpf().equals(cpfHash) &&
+                        SecurityUtils.verificarSenha(senha, admin.getSenhaHash()))
                 .findFirst()
                 .orElse(null);
     }
@@ -117,9 +119,10 @@ public class EntityIndexManager {
         return eleitores.get(cpfHash);
     }
 
-    public Eleitor buscarEleitorPorCpfHashESenhaHash(String cpfHash, String senhaHash) {
+    public Eleitor buscarEleitorPorCpfHashESenhaHash(String cpfHash, String senha) {
         return eleitores.values().stream()
-                .filter(eleitor -> eleitor.getCpfHash().equals(cpfHash) && eleitor.getSenhaHash().equals(senhaHash))
+                .filter(eleitor -> eleitor.getCpfHash().equals(cpfHash) &&
+                        SecurityUtils.verificarSenha(senha, eleitor.getSenhaHash()))
                 .findFirst()
                 .orElse(null);
     }

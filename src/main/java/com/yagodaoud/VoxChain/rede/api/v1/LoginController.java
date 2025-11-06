@@ -42,10 +42,10 @@ public class LoginController implements IApiController {
 
             JsonObject json = gson.fromJson(req.body(), JsonObject.class);
             String cpfHash = Eleitor.hashCpf(json.get("cpf").getAsString());
-            String senhaHash = Administrador.hashSenha(json.get("senha").getAsString());
+            String senha = json.get("senha").getAsString();
 
             // Busca na blockchain
-            Administrador admin = no.getBlockchain().buscarAdminPorCpfHashESenhaHash(cpfHash, senhaHash);
+            Administrador admin = no.getBlockchain().buscarAdminPorCpfHashESenhaHash(cpfHash, senha);
             if (admin != null && admin.isAtivo()) {
                 // Login bem-sucedido - remove tentativas
                 tentativas.remove(ip);
@@ -56,9 +56,7 @@ public class LoginController implements IApiController {
                 ));
             }
 
-            senhaHash = Eleitor.hashSenha(json.get("senha").getAsString());
-
-            Eleitor eleitor = no.getBlockchain().buscarEleitorPorCpfHashESenhaHash(cpfHash, senhaHash);
+            Eleitor eleitor = no.getBlockchain().buscarEleitorPorCpfHashESenhaHash(cpfHash, senha);
             if (eleitor != null) {
                 // Login bem-sucedido - remove tentativas
                 tentativas.remove(ip);
