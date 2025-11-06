@@ -104,7 +104,6 @@ public class VotoController implements IApiController {
                     if (tokensDoEleitor.isEmpty()) {
                         res.status(200);
                         return gson.toJson(Map.of(
-                                "cpfHash", cpfHash.substring(0, 8) + "...",
                                 "totalVotos", 0,
                                 "votos", new ArrayList<>(),
                                 "mensagem", "Nenhum voto encontrado para este eleitor"
@@ -118,7 +117,6 @@ public class VotoController implements IApiController {
 
                     res.status(200);
                     return gson.toJson(Map.of(
-                            "cpfHash", cpfHash.substring(0, 8) + "...",
                             "totalVotos", meusVotos.size(),
                             "votos", meusVotos
                     ));
@@ -135,7 +133,7 @@ public class VotoController implements IApiController {
                 }
             });
 
-            // POST /api/v1/votos/batch - Cadastro em lote (para testes)
+            // POST /api/v1/votos/
             post("/batch", (req, res) -> {
                 res.type("application/json");
                 String solicitanteId = req.attribute("adminId");

@@ -20,7 +20,7 @@ public class CandidatoController implements IApiController {
         path("/candidatos", () -> {
             post("/criar", (req, res) -> {
                 res.type("application/json");
-                String solicitanteId = req.attribute("adminId");
+                String solicitanteId = req.attribute("cpfHash");
                 NovoCandidatoDTO candidatoDTO = gson.fromJson(req.body(), NovoCandidatoDTO.class);
 
                 servicoEleicao.cadastrarCandidato(
