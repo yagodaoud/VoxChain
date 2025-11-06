@@ -136,11 +136,78 @@ public class VotoController implements IApiController {
             // POST /api/v1/votos/
             post("/batch", (req, res) -> {
                 res.type("application/json");
-                String solicitanteId = req.attribute("adminId");
 
-                res.status(201);
-                return "{\"message\":\"Votos cadastrados com sucesso!\"}";
+                JsonObject json = gson.fromJson(req.body(), JsonObject.class);
+                if (json == null) {
+                    res.status(400);
+                    return gson.toJson(Map.of("erro", "Body inválido"));
+                }
+
+                String tokenVotacao = json.has("tokenVotacao") ? json.get("tokenVotacao").getAsString() : null;
+                String eleicaoId = json.has("eleicaoId") ? json.get("eleicaoId").getAsString() : null;
+
+                if (tokenVotacao == null || eleicaoId == null) {
+                    res.status(400);
+                    return gson.toJson(Map.of("erro", "tokenVotacao e eleicaoId são obrigatórios"));
+                }
+
+                try {
+                    var votosArray = json.getAsJsonArray("votos");
+                    if (votosArray == null || votosArray.size() == 0) {
+                        res.status(400);
+                        return gson.toJson(Map.of("erro", "A lista de votos não pode estar vazia"));
+                    }
+
+                    List<Map<String, String>> resultados = new ArrayList<>();
+
+                    for (var votoElement : votosArray) {
+                        JsonObject votoJson = votoElement.getAsJsonObject();
+
+                        String categoria = votoJson.has("categoria") ? votoJson.get("categoria").getAsString() : null;
+                        String numeroVoto = votoJson.has("numeroVoto") ? votoJson.get("numeroVoto").getAsString() : null;
+
+                        if (categoria == null || numeroVoto == null) {
+                            resultados.add(Map.of(
+                                    "categoria", categoria != null ? categoria : "desconhecida",
+                                    "status", "erro",
+                                    "mensagem", "categoria e numeroVoto são obrigatórios"
+                            ));
+                            continue;
+                        }
+
+                        try {
+                            // Registra o voto individualmente
+                            // (caso o método registrarVoto precise do tipo, podemos converter o enum aqui)
+                            servicoEleicao.registrarVoto(tokenVotacao, numeroVoto, eleicaoId);
+
+                            resultados.add(Map.of(
+                                    "categoria", categoria,
+                                    "status", "sucesso",
+                                    "mensagem", "Voto registrado com sucesso"
+                            ));
+                        } catch (Exception e) {
+                            resultados.add(Map.of(
+                                    "categoria", categoria,
+                                    "status", "erro",
+                                    "mensagem", e.getMessage()
+                            ));
+                        }
+                    }
+
+                    boolean temErro = resultados.stream().anyMatch(r -> r.get("status").equals("erro"));
+                    res.status(temErro ? 207 : 201); // 207 = Multi-Status (alguns erros)
+
+                    return gson.toJson(Map.of(
+                            "mensagem", "Processamento de votos concluído",
+                            "resultados", resultados
+                    ));
+
+                } catch (Exception e) {
+                    res.status(500);
+                    return gson.toJson(Map.of("erro", "Erro ao processar votos em batch: " + e.getMessage()));
+                }
             });
+
 
             // GET /api/v1/votos/listar - Lista votos/candidatos (para admins)
             get("/listar", (req, res) -> {

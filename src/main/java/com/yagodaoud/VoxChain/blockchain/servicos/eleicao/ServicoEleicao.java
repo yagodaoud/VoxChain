@@ -90,15 +90,12 @@ public class ServicoEleicao {
             throw new IllegalArgumentException("Eleição não encontrada.");
         }
 
-        long agora = System.currentTimeMillis();
+        long agora = System.currentTimeMillis() / 1000L;
         if (agora < eleicao.getDataInicio()) {
             throw new IllegalStateException("Eleição ainda não iniciou");
         }
         if (agora > eleicao.getDataFim()) {
             throw new IllegalStateException("Eleição já encerrou");
-        }
-        if (!eleicao.estaAberta()) {
-            throw new IllegalStateException("Eleição não está aberta");
         }
 
         // 3. Verificar se candidato existe
