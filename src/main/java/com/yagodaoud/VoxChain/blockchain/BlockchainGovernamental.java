@@ -234,7 +234,7 @@ public class BlockchainGovernamental implements Serializable {
                 .flatMap(b -> b.getTransacoes().stream())
                 .filter(t -> t.getTipo() == com.yagodaoud.VoxChain.modelo.enums.TipoTransacao.VOTO)
                 .map(t -> t.getPayloadAs(Voto.class))
-                .filter(v -> v != null && v.getIdEleitorHash().equals(hash))
+                .filter(v -> v != null && v.getTokenVotacao().equals(hash))
                 .findFirst()
                 .orElse(null);
     }

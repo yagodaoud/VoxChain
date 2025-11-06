@@ -33,11 +33,6 @@ public class EleitorController implements IApiController {
                 res.status(201);
                 return "{\"message\":\"Eleitor cadastrado com sucesso!\"}";
             });
-
-            get("/listar", (req, res) -> {
-                res.type("application/json");
-                return gson.toJson(servicoEleitor.listarEleitores());
-            });
         });
     }
 }

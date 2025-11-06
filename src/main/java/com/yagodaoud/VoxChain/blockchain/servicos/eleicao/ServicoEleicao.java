@@ -1,6 +1,7 @@
 package com.yagodaoud.VoxChain.blockchain.servicos.eleicao;
 
 import com.yagodaoud.VoxChain.blockchain.BlockchainGovernamental;
+import com.yagodaoud.VoxChain.blockchain.servicos.GerenciadorTokenVotacao;
 import com.yagodaoud.VoxChain.blockchain.servicos.ServicoAdministracao;
 import com.yagodaoud.VoxChain.modelo.Candidato;
 import com.yagodaoud.VoxChain.modelo.Eleicao;
@@ -16,10 +17,12 @@ public class ServicoEleicao {
 
     private final BlockchainGovernamental blockchain;
     private final ServicoAdministracao servicoAdministracao;
+    private final GerenciadorTokenVotacao gerenciadorToken;
 
-    public ServicoEleicao(BlockchainGovernamental blockchain, ServicoAdministracao servicoAdministracao) {
+    public ServicoEleicao(BlockchainGovernamental blockchain, ServicoAdministracao servicoAdministracao, GerenciadorTokenVotacao gerenciadorToken) {
         this.blockchain = blockchain;
         this.servicoAdministracao = servicoAdministracao;
+        this.gerenciadorToken = gerenciadorToken;
     }
 
     public List<Eleicao> listarEleicoes() {
@@ -75,21 +78,46 @@ public class ServicoEleicao {
         return novoCandidato;
     }
 
-    public Voto registrarVoto(String eleitorHash, String numeroCandidato, String eleicaoId) {
-        Eleicao eleicao = blockchain.buscarEleicao(eleicaoId);
-        Candidato candidato = blockchain.buscarCandidato(numeroCandidato);
-
-        if (eleicao == null || !eleicao.estaAberta()) {
-            throw new IllegalStateException("A eleição não está aberta para votação.");
+    public Voto registrarVoto(String tokenVotacao, String numeroCandidato, String eleicaoId) {
+        // 1. Validar token usando GerenciadorTokenVotacao
+        if (!gerenciadorToken.validarToken(tokenVotacao, eleicaoId)) {
+            throw new IllegalStateException("Token de votação inválido ou expirado");
         }
+
+        // 2. Verificar se eleição está aberta e validações temporais
+        Eleicao eleicao = blockchain.buscarEleicao(eleicaoId);
+        if (eleicao == null) {
+            throw new IllegalArgumentException("Eleição não encontrada.");
+        }
+
+        long agora = System.currentTimeMillis();
+        if (agora < eleicao.getDataInicio()) {
+            throw new IllegalStateException("Eleição ainda não iniciou");
+        }
+        if (agora > eleicao.getDataFim()) {
+            throw new IllegalStateException("Eleição já encerrou");
+        }
+        if (!eleicao.estaAberta()) {
+            throw new IllegalStateException("Eleição não está aberta");
+        }
+
+        // 3. Verificar se candidato existe
+        Candidato candidato = blockchain.buscarCandidato(numeroCandidato);
         if (candidato == null) {
             throw new IllegalArgumentException("Candidato não encontrado.");
         }
 
-        Voto voto = new Voto(eleitorHash, numeroCandidato, candidato.getCargo().toString(), eleicaoId);
-        Transacao transacao = new Transacao(TipoTransacao.VOTO, voto, eleitorHash);
+        // 4. Criar Voto usando tokenVotacao (não eleitorHash)
+        Voto voto = new Voto(tokenVotacao, numeroCandidato, candidato.getCargo().toString(), eleicaoId);
+        
+        // 5. Marcar token como usado
+        gerenciadorToken.marcarTokenComoUsado(tokenVotacao);
+
+        // 6. Adicionar transação ao pool (idOrigem será 'ANONIMO' automaticamente)
+        Transacao transacao = new Transacao(TipoTransacao.VOTO, voto, "ANONIMO");
         blockchain.adicionarAoPool(transacao);
 
+        // 7. Retornar voto
         return voto;
     }
 }

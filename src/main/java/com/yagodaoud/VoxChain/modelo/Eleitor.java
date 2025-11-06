@@ -26,7 +26,7 @@ public class Eleitor {
     }
 
     public static String hashSenha(String senha) {
-        return SecurityUtils.hash(senha, salt);
+        return SecurityUtils.hashSenhaSegura(senha);
     }
 
     public String getCpfHash() {

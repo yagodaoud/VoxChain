@@ -6,6 +6,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.yagodaoud.VoxChain.modelo.enums.NivelAcesso;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -34,6 +35,25 @@ public class SecurityUtils {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Gera hash seguro de senha usando BCrypt
+     * @param senha Senha em texto plano
+     * @return Hash BCrypt da senha
+     */
+    public static String hashSenhaSegura(String senha) {
+        return BCrypt.hashpw(senha, BCrypt.gensalt(12));
+    }
+
+    /**
+     * Verifica se uma senha corresponde ao hash BCrypt
+     * @param senha Senha em texto plano
+     * @param hash Hash BCrypt armazenado
+     * @return true se a senha corresponde ao hash
+     */
+    public static boolean verificarSenha(String senha, String hash) {
+        return BCrypt.checkpw(senha, hash);
     }
 
     public static String gerarToken(String cpfHash, NivelAcesso nivelAcesso) {

@@ -5,10 +5,14 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.gson.Gson;
 import com.yagodaoud.VoxChain.blockchain.No;
+import com.yagodaoud.VoxChain.blockchain.servicos.GerenciadorTokenVotacao;
 import com.yagodaoud.VoxChain.blockchain.servicos.ServicoAdministracao;
 import com.yagodaoud.VoxChain.blockchain.servicos.eleicao.ServicoEleicao;
 import com.yagodaoud.VoxChain.blockchain.servicos.ServicoEleitor;
 import com.yagodaoud.VoxChain.modelo.Administrador;
+import com.yagodaoud.VoxChain.modelo.LogAuditoria;
+import com.yagodaoud.VoxChain.modelo.Transacao;
+import com.yagodaoud.VoxChain.modelo.enums.TipoTransacao;
 import com.yagodaoud.VoxChain.rede.api.v1.*;
 import com.yagodaoud.VoxChain.utils.SecurityUtils;
 import spark.Spark;
@@ -65,7 +69,8 @@ public class ApiServidor {
 
         // Instancia os serviços que contêm a lógica de negócio.
         ServicoAdministracao servicoAdmin = new ServicoAdministracao(no.getBlockchain());
-        ServicoEleicao servicoEleicao = new ServicoEleicao(no.getBlockchain(), servicoAdmin);
+        GerenciadorTokenVotacao gerenciadorToken = new GerenciadorTokenVotacao();
+        ServicoEleicao servicoEleicao = new ServicoEleicao(no.getBlockchain(), servicoAdmin, gerenciadorToken);
         ServicoEleitor servicoEleitor = new ServicoEleitor(no.getBlockchain());
 
         // ==================== REGISTRO DE CONTROLLERS ====================
@@ -79,12 +84,35 @@ public class ApiServidor {
                 new LoginController(no),
                 new CandidatoController(servicoEleicao, servicoAdmin),
                 new VotoController(servicoEleicao, servicoAdmin),
-                new EleitorController(servicoEleitor)
+                new EleitorController(servicoEleitor),
+                new TokenVotacaoController(gerenciadorToken)
         );
 
         // Define um prefixo global para todas as rotas da API versionada.
         path("/api/v1", () -> {
             controllers.forEach(controller -> controller.registerRoutes(gson));
+        });
+
+        // ==================== AUDITORIA ====================
+
+        // Filtro after para registrar auditoria em ações administrativas
+        after("/api/v1/admin/*", (req, res) -> {
+            String cpfHash = req.attribute("cpfHash");
+            String ipOrigem = req.ip();
+            String acao = req.requestMethod() + " " + req.pathInfo();
+            
+            if (cpfHash != null) {
+                String detalhes = gson.toJson(Map.of(
+                        "method", req.requestMethod(),
+                        "path", req.pathInfo(),
+                        "status", res.status()
+                ));
+                
+                LogAuditoria log = new LogAuditoria(acao, cpfHash, detalhes, ipOrigem);
+                // Registra na blockchain como transação de auditoria
+                Transacao transacaoAuditoria = new Transacao(TipoTransacao.CADASTRO_ADMIN, log, cpfHash);
+                no.getBlockchain().adicionarAoPool(transacaoAuditoria);
+            }
         });
 
         // ==================== TRATAMENTO DE ERROS GLOBAIS ====================
