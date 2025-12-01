@@ -19,7 +19,8 @@ public class ServicoEleicao {
     private final ServicoAdministracao servicoAdministracao;
     private final GerenciadorTokenVotacao gerenciadorToken;
 
-    public ServicoEleicao(BlockchainGovernamental blockchain, ServicoAdministracao servicoAdministracao, GerenciadorTokenVotacao gerenciadorToken) {
+    public ServicoEleicao(BlockchainGovernamental blockchain, ServicoAdministracao servicoAdministracao,
+            GerenciadorTokenVotacao gerenciadorToken) {
         this.blockchain = blockchain;
         this.servicoAdministracao = servicoAdministracao;
         this.gerenciadorToken = gerenciadorToken;
@@ -29,11 +30,11 @@ public class ServicoEleicao {
         return blockchain.listarEleicoes();
     }
 
-    public Eleicao criarEleicao(String cpfHash, String nome, String descricao, List<CategoriaEleicao> categorias, long dataInicio, long dataFim) {
+    public Eleicao criarEleicao(String cpfHash, String nome, String descricao, List<CategoriaEleicao> categorias,
+            long dataInicio, long dataFim) {
         if (!servicoAdministracao.temPermissao(cpfHash, TipoTransacao.CRIACAO_ELEICAO)) {
             throw new SecurityException(
-                    "Admin " + cpfHash + " não tem permissão para criar eleições"
-            );
+                    "Admin " + cpfHash + " não tem permissão para criar eleições");
         }
 
         if (dataFim <= dataInicio) {
@@ -65,7 +66,8 @@ public class ServicoEleicao {
         return blockchain.listarCandidatos(eleicaoId);
     }
 
-    public Candidato cadastrarCandidato(String solicitanteId, String eleicaoId, String numero, String nome, String partido, CargoCandidato cargo, String uf, String fotoUrl) {
+    public Candidato cadastrarCandidato(String solicitanteId, String eleicaoId, String numero, String nome,
+            String partido, CargoCandidato cargo, String uf, String fotoUrl) {
         Eleicao eleicao = blockchain.buscarEleicao(eleicaoId);
         if (eleicao == null) {
             throw new IllegalArgumentException("Eleição não encontrada para cadastrar candidato.");
@@ -90,7 +92,7 @@ public class ServicoEleicao {
             throw new IllegalArgumentException("Eleição não encontrada.");
         }
 
-        long agora = System.currentTimeMillis() / 1000L;
+        long agora = System.currentTimeMillis();
         if (agora < eleicao.getDataInicio()) {
             throw new IllegalStateException("Eleição ainda não iniciou");
         }
@@ -106,7 +108,7 @@ public class ServicoEleicao {
 
         // 4. Criar Voto usando tokenVotacao (não eleitorHash)
         Voto voto = new Voto(tokenVotacao, numeroCandidato, candidato.getCargo().toString(), eleicaoId);
-        
+
         // 5. Marcar token como usado
         gerenciadorToken.marcarTokenComoUsado(tokenVotacao);
 
