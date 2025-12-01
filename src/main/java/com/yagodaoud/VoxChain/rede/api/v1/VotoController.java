@@ -15,6 +15,7 @@ import com.yagodaoud.VoxChain.modelo.Transacao;
 import com.yagodaoud.VoxChain.modelo.Voto;
 import com.yagodaoud.VoxChain.modelo.enums.CargoCandidato;
 import com.yagodaoud.VoxChain.modelo.enums.TipoTransacao;
+import com.yagodaoud.VoxChain.utils.Logger;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -99,12 +100,12 @@ public class VotoController implements IApiController {
                     // Converte CPF para hash (mesma função usada no cadastro)
                     String cpfHash = Eleitor.hashCpf(cpf);
 
-                    System.out.println("[VOTOS] Buscando votos para CPF hash: " + cpfHash.substring(0, 8) + "...");
+                    Logger.info(no.getId(), "Buscando votos para CPF hash: " + cpfHash.substring(0, 8) + "...");
 
                     // Busca todos os tokens gerados por este eleitor
                     List<String> tokensDoEleitor = gerenciadorToken.obterTokensDoEleitor(cpfHash);
 
-                    System.out.println("[VOTOS] Eleitor possui " + tokensDoEleitor.size() + " tokens gerados");
+                    Logger.info(no.getId(), "Eleitor possui " + tokensDoEleitor.size() + " tokens gerados");
 
                     if (tokensDoEleitor.isEmpty()) {
                         res.status(200);
@@ -117,7 +118,7 @@ public class VotoController implements IApiController {
                     // Busca votos na blockchain usando os tokens
                     List<Map<String, Object>> meusVotos = buscarVotosPorTokens(tokensDoEleitor);
 
-                    System.out.println("[VOTOS] Encontrados " + meusVotos.size() + " votos registrados na blockchain");
+                    Logger.info(no.getId(), "Encontrados " + meusVotos.size() + " votos registrados na blockchain");
 
                     res.status(200);
                     return gson.toJson(Map.of(
@@ -125,7 +126,7 @@ public class VotoController implements IApiController {
                             "votos", meusVotos));
 
                 } catch (Exception e) {
-                    System.err.println("[VOTOS] Erro ao buscar votos: " + e.getMessage());
+                    Logger.error(no.getId(), "Erro ao buscar votos: " + e.getMessage());
                     e.printStackTrace();
 
                     res.status(500);
@@ -314,9 +315,9 @@ public class VotoController implements IApiController {
     private List<Map<String, Object>> buscarVotosPorTokens(List<String> tokensDoEleitor) {
         List<Map<String, Object>> meusVotos = new ArrayList<>();
 
-        System.out.println("[DEBUG] Iniciando busca de votos na blockchain...");
-        System.out.println("[DEBUG] Total de blocos: " + no.getBlockchain().getTamanho());
-        System.out.println("[DEBUG] Tokens a buscar: " + tokensDoEleitor.size());
+        Logger.debug(no.getId(), "Iniciando busca de votos na blockchain...");
+        Logger.debug(no.getId(), "Total de blocos: " + no.getBlockchain().getTamanho());
+        Logger.debug(no.getId(), "Tokens a buscar: " + tokensDoEleitor.size());
 
         // Percorre todos os blocos da blockchain
         for (Bloco bloco : no.getBlockchain().getBlocos()) {
@@ -349,17 +350,17 @@ public class VotoController implements IApiController {
 
                             meusVotos.add(votoInfo);
 
-                            System.out.println("[DEBUG] ✓ Voto encontrado!");
-                            System.out.println("[DEBUG]   Bloco: " + bloco.getIndice());
-                            System.out.println("[DEBUG]   Token: " + voto.getTokenVotacao().substring(0, 8) + "...");
-                            System.out.println("[DEBUG]   Eleição: " + voto.getIdEleicao());
+                            Logger.debug(no.getId(), "Voto encontrado!");
+                            Logger.debug(no.getId(), "  Bloco: " + bloco.getIndice());
+                            Logger.debug(no.getId(), "  Token: " + voto.getTokenVotacao().substring(0, 8) + "...");
+                            Logger.debug(no.getId(), "  Eleição: " + voto.getIdEleicao());
                         }
                     }
                 }
             }
         }
 
-        System.out.println("[DEBUG] Busca concluída: " + meusVotos.size() + " votos encontrados");
+        Logger.debug(no.getId(), "Busca concluída: " + meusVotos.size() + " votos encontrados");
 
         return meusVotos;
     }

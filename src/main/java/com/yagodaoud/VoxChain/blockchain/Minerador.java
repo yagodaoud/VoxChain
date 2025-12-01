@@ -1,5 +1,7 @@
 package com.yagodaoud.VoxChain.blockchain;
 
+import com.yagodaoud.VoxChain.utils.Logger;
+
 public class Minerador implements Runnable {
     private No no;
     private volatile boolean minerando = false;
@@ -54,12 +56,12 @@ public class Minerador implements Runnable {
         int tamanhoBlockchain = no.getBlockchain().getTamanho();
         int poolSize = no.getBlockchain().getPoolSize();
 
-        System.out.println("[" + no.getId() + "] Iniciando mineração (blockchain: " +
+        Logger.info(no.getId(), "[" + no.getId() + "] Iniciando mineração (blockchain: " +
                 tamanhoBlockchain + " blocos, pool: " + poolSize + " transações)");
 
         Bloco bloco = no.getBlockchain().criarBlocoCandidato(no.getId(), null);
         if (bloco == null) {
-            System.out.println("[" + no.getId() + "] Pool vazio, cancelando mineração");
+            Logger.info(no.getId(), "[" + no.getId() + "] Pool vazio, cancelando mineração");
             minerando = false;
             return;
         }
@@ -71,19 +73,19 @@ public class Minerador implements Runnable {
         // VERIFICAÇÃO CRÍTICA: O bloco ainda é válido?
         // (outro nó pode ter minerado antes)
         if (bloco.getIndice() != no.getBlockchain().getTamanho()) {
-            System.out.println("[" + no.getId() + "] ✗ Bloco descartado (blockchain evoluiu, " +
+            Logger.info(no.getId(), "[" + no.getId() + "] ✗ Bloco descartado (blockchain evoluiu, " +
                     "outro nó foi mais rápido)");
             return;
         }
 
         // Valida o próprio bloco antes de adicionar
         if (!no.getBlockchain().validarBloco(bloco)) {
-            System.out.println("[" + no.getId() + "] ✗ Bloco inválido (validação falhou)");
+            Logger.info(no.getId(), "[" + no.getId() + "] ✗ Bloco inválido (validação falhou)");
             return;
         }
 
-        System.out.println("[" + no.getId() + "] ✓ Bloco minerado em " + duracao + "ms");
-        System.out.println("[" + no.getId() + "]   Índice: " + bloco.getIndice() +
+        Logger.info(no.getId(), "[" + no.getId() + "] ✓ Bloco minerado em " + duracao + "ms");
+        Logger.info(no.getId(), "[" + no.getId() + "]   Índice: " + bloco.getIndice() +
                 ", Hash: " + bloco.getHashTruncado(16) +
                 ", Transações: " + bloco.getTransacoes().size());
 

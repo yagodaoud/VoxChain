@@ -2,6 +2,7 @@ package com.yagodaoud.VoxChain.blockchain.indices;
 
 import com.yagodaoud.VoxChain.blockchain.Bloco;
 import com.yagodaoud.VoxChain.modelo.*;
+import com.yagodaoud.VoxChain.utils.Logger;
 import com.yagodaoud.VoxChain.utils.SecurityUtils;
 
 import java.util.*;
@@ -26,7 +27,8 @@ public class EntityIndexManager {
     }
 
     public void atualizarComBloco(Bloco bloco) {
-        if (bloco == null) return;
+        if (bloco == null)
+            return;
 
         for (Transacao t : bloco.getTransacoes()) {
             processarTransacao(t);
@@ -36,20 +38,20 @@ public class EntityIndexManager {
     public void reconstruirIndices(List<Bloco> blocos) {
         limpar();
 
-        System.out.println("[ÍNDICES] Reconstruindo índices...");
+        Logger.info(null, "Reconstruindo índices...");
 
         blocos.stream()
                 .skip(1) // Pula gênesis
                 .forEach(this::atualizarComBloco);
 
-        System.out.println(String.format(
-                "[ÍNDICES] Reconstruídos: %d admins, %d eleitores, %d candidatos, %d eleições",
-                admins.size(), eleitores.size(), candidatos.size(), eleicoes.size()
-        ));
+        Logger.info(null, String.format(
+                "Reconstruídos: %d admins, %d eleitores, %d candidatos, %d eleições",
+                admins.size(), eleitores.size(), candidatos.size(), eleicoes.size()));
     }
 
     private void processarTransacao(Transacao t) {
-        if (t == null) return;
+        if (t == null)
+            return;
 
         switch (t.getTipo()) {
             case CADASTRO_ADMIN:

@@ -23,13 +23,13 @@ public class ConfigManager {
             if (input != null) {
                 props.load(input);
                 carregado = true;
-                System.out.println("✓ bootstrap.properties carregado");
+                Logger.info("CONFIG", "bootstrap.properties carregado");
             } else {
-                System.out.println("⚠ bootstrap.properties não encontrado, usando defaults");
+                Logger.info("CONFIG", "bootstrap.properties não encontrado, usando defaults");
                 carregarDefaults();
             }
         } catch (IOException e) {
-            System.err.println("✗ Erro ao carregar bootstrap.properties: " + e.getMessage());
+            Logger.error("CONFIG", "Erro ao carregar bootstrap.properties: " + e.getMessage());
             carregarDefaults();
         }
     }
@@ -50,7 +50,7 @@ public class ConfigManager {
         String config = props.getProperty("bootstrap.nodes", "");
 
         if (config.isEmpty()) {
-            System.out.println("⚠ Nenhum bootstrap node configurado");
+            Logger.info("CONFIG", "Nenhum bootstrap node configurado");
             return nodes;
         }
 
@@ -64,7 +64,7 @@ public class ConfigManager {
                     int porta = Integer.parseInt(partes[2].trim());
                     nodes.add(new PeerDiscovery.PeerInfo(id, ip, porta));
                 } catch (NumberFormatException e) {
-                    System.err.println("✗ Erro ao parsear bootstrap node: " + par);
+                    Logger.error("CONFIG", "Erro ao parsear bootstrap node: " + par);
                 }
             }
         }

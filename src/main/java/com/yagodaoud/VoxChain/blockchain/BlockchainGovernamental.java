@@ -6,6 +6,7 @@ import com.yagodaoud.VoxChain.blockchain.indices.VoteRegistry;
 import com.yagodaoud.VoxChain.blockchain.sync.ChainSynchronizer;
 import com.yagodaoud.VoxChain.blockchain.sync.ConflictResolver;
 import com.yagodaoud.VoxChain.modelo.*;
+import com.yagodaoud.VoxChain.utils.Logger;
 
 import java.io.Serializable;
 import java.util.List;
@@ -123,7 +124,7 @@ public class BlockchainGovernamental implements Serializable {
         BlockValidator.ValidationResult resultado = validator.validarBloco(bloco, ultimoBloco);
 
         if (!resultado.isValido()) {
-            System.err.println("[VALIDAÇÃO] " + resultado.getMensagem());
+            Logger.error(null, "[VALIDAÇÃO] " + resultado.getMensagem());
         }
 
         return resultado.isValido();
@@ -133,7 +134,7 @@ public class BlockchainGovernamental implements Serializable {
         BlockValidator.ValidationResult resultado = validator.validarCadeia(chain.obterTodosBlocos());
 
         if (!resultado.isValido()) {
-            System.err.println("[VALIDAÇÃO] " + resultado.getMensagem());
+            Logger.error(null, "[VALIDAÇÃO] " + resultado.getMensagem());
         }
 
         return resultado.isValido();
@@ -144,7 +145,7 @@ public class BlockchainGovernamental implements Serializable {
     public synchronized void substituir(List<Bloco> cadeiaRemota) {
         ChainSynchronizer.SyncResult resultado = synchronizer.sincronizar(cadeiaRemota);
 
-        System.out.println("[SYNC] " + resultado);
+        Logger.info(null, "[SYNC] " + resultado);
 
         if (resultado.isSucesso()) {
             pool.limpar();
@@ -256,8 +257,7 @@ public class BlockchainGovernamental implements Serializable {
                 indices.getTotalAdmins(),
                 indices.getTotalEleitores(),
                 indices.getTotalCandidatos(),
-                indices.getTotalEleicoes()
-        );
+                indices.getTotalEleicoes());
     }
 
     @Override
@@ -266,7 +266,6 @@ public class BlockchainGovernamental implements Serializable {
                 "BlockchainGovernamental{tamanho=%d, pool=%d, dificuldade=%d}",
                 getTamanho(),
                 getPoolSize(),
-                getDificuldade()
-        );
+                getDificuldade());
     }
 }

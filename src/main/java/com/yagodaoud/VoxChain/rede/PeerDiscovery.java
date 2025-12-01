@@ -1,6 +1,7 @@
 package com.yagodaoud.VoxChain.rede;
 
 import com.yagodaoud.VoxChain.blockchain.No;
+import com.yagodaoud.VoxChain.utils.Logger;
 
 import java.io.Serializable;
 import java.util.*;
@@ -65,8 +66,7 @@ public class PeerDiscovery {
         // Adiciona bootstrap nodes ao catálogo
         peersCatalogo.addAll(bootstrapNodes);
 
-        System.out.println("[" + noLocal.getId() + "] 🔍 PeerDiscovery iniciado com " +
-                bootstrapNodes.size() + " bootstrap nodes");
+        Logger.info(noLocal.getId(), "PeerDiscovery iniciado com " + bootstrapNodes.size() + " bootstrap nodes");
 
         // Task 1: Conectar nos bootstrap nodes periodicamente
         executor.scheduleAtFixedRate(
@@ -104,7 +104,7 @@ public class PeerDiscovery {
         for (PeerInfo peer : peersCatalogo) {
             // Se não está conectado e bootstrapNode, tenta conectar
             if (!peer.ativo && estaDisponivel(peer)) {
-                System.out.println("[" + noLocal.getId() + "] 🔗 Tentando bootstrap: " + peer);
+                Logger.network(noLocal.getId(), "Tentando bootstrap: " + peer);
                 noLocal.conectarPeer(peer.ip, peer.porta, peer.id);
                 peer.ativo = true;
                 peer.ultimoContato = System.currentTimeMillis();
@@ -119,7 +119,7 @@ public class PeerDiscovery {
 
         for (Peer peer : noLocal.getPeers()) {
             if (!peer.isConectado()) {
-                System.out.println("[" + noLocal.getId() + "] ⚠ Peer desconectado: " + peer.getId());
+                Logger.error(noLocal.getId(), "Peer desconectado: " + peer.getId());
                 marcarPeerComoInativo(peer.getId());
             } else {
                 // Envia PING para validar
@@ -129,7 +129,7 @@ public class PeerDiscovery {
         }
 
         if (peersDisco == 0 && !peersCatalogo.isEmpty()) {
-            System.out.println("[" + noLocal.getId() + "] ⚠ Sem peers conectados. Tentando reconectar...");
+            Logger.error(noLocal.getId(), "Sem peers conectados. Tentando reconectar...");
         }
     }
 
@@ -147,8 +147,7 @@ public class PeerDiscovery {
         }
 
         if (conectados > 0) {
-            System.out.println("[" + noLocal.getId() + "] 📡 Sincronizando catálogo com " +
-                    conectados + " peers");
+            Logger.network(noLocal.getId(), "Sincronizando catálogo com " + conectados + " peers");
         }
     }
 
@@ -162,7 +161,7 @@ public class PeerDiscovery {
         }
         PeerInfo novo = new PeerInfo(id, ip, porta);
         peersCatalogo.add(novo);
-        System.out.println("[" + noLocal.getId() + "] ➕ Novo peer descoberto: " + novo);
+        Logger.network(noLocal.getId(), "Novo peer descoberto: " + novo);
     }
 
     public void atualizarCatalogo(List<PeerInfo> peersRecebidos) {

@@ -4,6 +4,7 @@ import com.yagodaoud.VoxChain.blockchain.Bloco;
 import com.yagodaoud.VoxChain.modelo.Transacao;
 import com.yagodaoud.VoxChain.modelo.Voto;
 import com.yagodaoud.VoxChain.modelo.enums.TipoTransacao;
+import com.yagodaoud.VoxChain.utils.Logger;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,7 +37,8 @@ public class VoteRegistry {
      * Atualiza o registro com votos de um novo bloco
      */
     public void atualizarComBloco(Bloco bloco) {
-        if (bloco == null) return;
+        if (bloco == null)
+            return;
 
         bloco.getTransacoes().stream()
                 .filter(t -> t.getTipo() == TipoTransacao.VOTO)
@@ -51,17 +53,16 @@ public class VoteRegistry {
     public void reconstruirRegistro(List<Bloco> blocos) {
         limpar();
 
-        System.out.println("[VOTOS] Reconstruindo registro de votos...");
+        Logger.info(null, "Reconstruindo registro de votos...");
 
         blocos.stream()
                 .skip(1) // Pula gênesis
                 .forEach(this::atualizarComBloco);
 
-        System.out.println(String.format(
-                "[VOTOS] Reconstruídos: %d votos em %d eleições",
+        Logger.info(null, String.format(
+                "Reconstruídos: %d votos em %d eleições",
                 votosRegistrados.size(),
-                totalVotosPorEleicao.size()
-        ));
+                totalVotosPorEleicao.size()));
     }
 
     /**
@@ -102,8 +103,7 @@ public class VoteRegistry {
                 .filter(e -> e.getKey().startsWith(eleicaoId + ":"))
                 .collect(Collectors.toMap(
                         e -> e.getKey().split(":")[1], // Número do candidato
-                        Map.Entry::getValue
-                ));
+                        Map.Entry::getValue));
     }
 
     /**
@@ -126,16 +126,14 @@ public class VoteRegistry {
         Map<String, Long> contagemReal = votosRegistrados.values().stream()
                 .collect(Collectors.groupingBy(
                         v -> criarChaveContagem(v.getIdEleicao(), v.getIdCandidato()),
-                        Collectors.counting()
-                ));
+                        Collectors.counting()));
 
         contagemReal.forEach((chave, contagemEsperada) -> {
             Integer contagemRegistrada = contagemVotos.get(chave);
             if (contagemRegistrada == null || contagemRegistrada != contagemEsperada.intValue()) {
                 report.adicionarErro(String.format(
                         "Inconsistência na contagem: %s (esperado: %d, registrado: %d)",
-                        chave, contagemEsperada, contagemRegistrada
-                ));
+                        chave, contagemEsperada, contagemRegistrada));
             }
         });
 
@@ -199,8 +197,7 @@ public class VoteRegistry {
             }
             return String.format("✗ %d erro(s) encontrado(s):\n- %s",
                     erros.size(),
-                    String.join("\n- ", erros)
-            );
+                    String.join("\n- ", erros));
         }
     }
 
@@ -234,8 +231,7 @@ public class VoteRegistry {
         public String toString() {
             return String.format(
                     "Estatísticas: %d votos | %d eleições | %d eleitores únicos",
-                    totalVotos, totalEleicoes, totalEleitoresUnicos
-            );
+                    totalVotos, totalEleicoes, totalEleitoresUnicos);
         }
     }
 }
