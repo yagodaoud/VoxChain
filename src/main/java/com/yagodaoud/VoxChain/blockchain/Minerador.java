@@ -17,6 +17,9 @@ public class Minerador implements Runnable {
     public void run() {
         while (!parar) {
             try {
+                // Verifica se há eleições para fechar
+                no.verificarFechamentoEleicoes();
+
                 // Verifica se pode minerar
                 if (!minerando &&
                         no.getBlockchain().temTransacoesPendentes() &&

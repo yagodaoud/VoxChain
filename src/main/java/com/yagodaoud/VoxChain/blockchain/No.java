@@ -1,7 +1,9 @@
 package com.yagodaoud.VoxChain.blockchain;
 
 import com.yagodaoud.VoxChain.blockchain.servicos.ServicoAdministracao;
+import com.yagodaoud.VoxChain.blockchain.servicos.eleicao.ServicoFechamentoEleicao;
 import com.yagodaoud.VoxChain.config.ConfigManager;
+import com.yagodaoud.VoxChain.modelo.Eleicao;
 import com.yagodaoud.VoxChain.modelo.Transacao;
 import com.yagodaoud.VoxChain.rede.MensagemP2P;
 import com.yagodaoud.VoxChain.rede.Peer;
@@ -27,6 +29,7 @@ public class No {
     private Minerador minerador;
     private PeerDiscovery peerDiscovery;
     private ServicoAdministracao servicoAdministracao;
+    private ServicoFechamentoEleicao servicoFechamentoEleicao;
 
     public No(String id, String ip, int porta) {
         this.id = id;
@@ -35,6 +38,7 @@ public class No {
         this.blockchain = new BlockchainGovernamental(2, 5);
         this.peers = new CopyOnWriteArrayList<>();
         this.servicoAdministracao = new ServicoAdministracao(blockchain);
+        this.servicoFechamentoEleicao = new ServicoFechamentoEleicao(blockchain);
     }
 
     // ============ INICIALIZAÇÃO ============
@@ -256,6 +260,16 @@ public class No {
 
     public void minerarManualmente() {
         minerador.minerarAgora();
+    }
+
+    public void verificarFechamentoEleicoes() {
+        List<Eleicao> eleicoes = blockchain.listarEleicoes();
+        for (Eleicao eleicao : eleicoes) {
+            if (servicoFechamentoEleicao.podeFecharEleicao(eleicao.getId())) {
+                Logger.info(id, "Fechando eleição: " + eleicao.getNome());
+                servicoFechamentoEleicao.fecharEleicao(eleicao.getId(), id);
+            }
+        }
     }
 
     // ============ GETTERS ============

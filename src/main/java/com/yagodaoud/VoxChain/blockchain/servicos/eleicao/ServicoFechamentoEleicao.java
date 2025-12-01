@@ -38,6 +38,10 @@ public class ServicoFechamentoEleicao {
             throw new IllegalArgumentException("Eleição não encontrada: " + eleicaoId);
         }
 
+        if (!eleicao.isAtiva()) {
+            return false;
+        }
+
         long agora = System.currentTimeMillis();
         return agora > eleicao.getDataFim();
     }
@@ -52,12 +56,14 @@ public class ServicoFechamentoEleicao {
 
         Eleicao eleicao = blockchain.buscarEleicao(eleicaoId);
 
+        // Atualiza estado da eleição
+        eleicao.fechar();
+
         // Cria transação de fechamento
         Transacao transacao = new Transacao(
                 TipoTransacao.FIM_ELEICAO,
                 eleicao,
-                solicitanteId
-        );
+                solicitanteId);
 
         blockchain.adicionarAoPool(transacao);
 
@@ -107,8 +113,7 @@ public class ServicoFechamentoEleicao {
                     candidato != null ? candidato.getNome() : "Desconhecido",
                     candidato != null ? candidato.getPartido() : "N/A",
                     votos,
-                    percentual
-            ));
+                    percentual));
         }
 
         // Ordena por votos (decrescente)
@@ -122,8 +127,7 @@ public class ServicoFechamentoEleicao {
                 eleicao.getNome(),
                 totalVotos,
                 resultados,
-                vencedor
-        );
+                vencedor);
     }
 
     /**
@@ -137,7 +141,7 @@ public class ServicoFechamentoEleicao {
         private final double percentual;
 
         public ResultadoCandidato(String numero, String nome, String partido,
-                                  int votos, double percentual) {
+                int votos, double percentual) {
             this.numero = numero;
             this.nome = nome;
             this.partido = partido;
@@ -145,11 +149,25 @@ public class ServicoFechamentoEleicao {
             this.percentual = percentual;
         }
 
-        public String getNumero() { return numero; }
-        public String getNome() { return nome; }
-        public String getPartido() { return partido; }
-        public int getVotos() { return votos; }
-        public double getPercentual() { return percentual; }
+        public String getNumero() {
+            return numero;
+        }
+
+        public String getNome() {
+            return nome;
+        }
+
+        public String getPartido() {
+            return partido;
+        }
+
+        public int getVotos() {
+            return votos;
+        }
+
+        public double getPercentual() {
+            return percentual;
+        }
 
         @Override
         public String toString() {
@@ -169,7 +187,7 @@ public class ServicoFechamentoEleicao {
         private final ResultadoCandidato vencedor;
 
         public ResultadoEleicao(String eleicaoId, String nomeEleicao, int totalVotos,
-                                List<ResultadoCandidato> resultados, ResultadoCandidato vencedor) {
+                List<ResultadoCandidato> resultados, ResultadoCandidato vencedor) {
             this.eleicaoId = eleicaoId;
             this.nomeEleicao = nomeEleicao;
             this.totalVotos = totalVotos;
@@ -177,11 +195,25 @@ public class ServicoFechamentoEleicao {
             this.vencedor = vencedor;
         }
 
-        public String getEleicaoId() { return eleicaoId; }
-        public String getNomeEleicao() { return nomeEleicao; }
-        public int getTotalVotos() { return totalVotos; }
-        public List<ResultadoCandidato> getResultados() { return resultados; }
-        public ResultadoCandidato getVencedor() { return vencedor; }
+        public String getEleicaoId() {
+            return eleicaoId;
+        }
+
+        public String getNomeEleicao() {
+            return nomeEleicao;
+        }
+
+        public int getTotalVotos() {
+            return totalVotos;
+        }
+
+        public List<ResultadoCandidato> getResultados() {
+            return resultados;
+        }
+
+        public ResultadoCandidato getVencedor() {
+            return vencedor;
+        }
 
         /**
          * Exibe resultado formatado para apresentação
@@ -200,8 +232,7 @@ public class ServicoFechamentoEleicao {
                         posicao++,
                         resultado.getNome(),
                         resultado.getVotos(),
-                        resultado.getPercentual()
-                );
+                        resultado.getPercentual());
                 System.out.println("║ " + String.format("%-53s", linha) + " ║");
             }
 
