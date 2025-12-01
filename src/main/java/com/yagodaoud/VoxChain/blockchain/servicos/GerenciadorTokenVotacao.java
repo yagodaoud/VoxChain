@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * Gerenciador de tokens de votação anônima.
@@ -29,12 +28,17 @@ public class GerenciadorTokenVotacao {
     // Chave: eleitorHash -> Lista de tokens gerados
     private final Map<String, List<String>> historicoTokensPorEleitor;
 
+    // NOVO: Registro de eleitores que já votaram (usaram o token)
+    // Chave: eleitorHash+eleicaoId -> Boolean
+    private final Map<String, Boolean> eleitoresQueVotaram;
+
     private static final long VALIDADE_TOKEN_MS = 30 * 60 * 1000; // 30 minutos
 
     public GerenciadorTokenVotacao() {
         this.tokensAtivos = new ConcurrentHashMap<>();
         this.tokensPorEleitor = new ConcurrentHashMap<>();
         this.historicoTokensPorEleitor = new ConcurrentHashMap<>();
+        this.eleitoresQueVotaram = new ConcurrentHashMap<>();
     }
 
     /**
@@ -48,6 +52,11 @@ public class GerenciadorTokenVotacao {
      */
     public TokenVotacao gerarToken(String eleitorHash, String eleicaoId) {
         String chaveEleitor = criarChaveEleitor(eleitorHash, eleicaoId);
+
+        // Verifica se eleitor já votou
+        if (eleitoresQueVotaram.containsKey(chaveEleitor)) {
+            throw new IllegalStateException("Eleitor já votou nesta eleição. Não é permitido gerar novo token.");
+        }
 
         // Verifica se eleitor já tem token ativo
         TokenVotacao tokenExistente = tokensPorEleitor.get(chaveEleitor);
@@ -116,6 +125,9 @@ public class GerenciadorTokenVotacao {
             String chaveEleitor = criarChaveEleitor(token.getEleitorHash(), token.getEleicaoId());
             tokensPorEleitor.remove(chaveEleitor);
 
+            // Registra que o eleitor votou nesta eleição
+            eleitoresQueVotaram.put(chaveEleitor, Boolean.TRUE);
+
             // MAS mantém no histórico (não remove de historicoTokensPorEleitor)
         }
     }
@@ -168,6 +180,18 @@ public class GerenciadorTokenVotacao {
     }
 
     /**
+     * Verifica se um eleitor já votou em uma eleição
+     *
+     * @param eleitorHash Hash do CPF do eleitor
+     * @param eleicaoId   ID da eleição
+     * @return true se já votou
+     */
+    public boolean eleitorJaVotou(String eleitorHash, String eleicaoId) {
+        String chaveEleitor = criarChaveEleitor(eleitorHash, eleicaoId);
+        return eleitoresQueVotaram.containsKey(chaveEleitor);
+    }
+
+    /**
      * Remove tokens expirados (limpeza periódica)
      * ATUALIZAÇÃO: Não remove do histórico, apenas dos tokens ativos
      */
@@ -205,7 +229,8 @@ public class GerenciadorTokenVotacao {
                 "tokensAtivos", tokensAtivos.size(),
                 "eleitoresComToken", tokensPorEleitor.size(),
                 "totalTokensGerados", totalTokensGerados,
-                "totalEleitores", historicoTokensPorEleitor.size());
+                "totalEleitores", historicoTokensPorEleitor.size(),
+                "eleitoresQueVotaram", eleitoresQueVotaram.size());
     }
 
     private String criarChaveEleitor(String eleitorHash, String eleicaoId) {

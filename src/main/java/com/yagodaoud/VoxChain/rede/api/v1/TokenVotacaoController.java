@@ -30,7 +30,7 @@ public class TokenVotacaoController implements IApiController {
         path("/tokens", () -> {
             post("/gerar", (req, res) -> {
                 res.type("application/json");
-                
+
                 // Extrai cpfHash do token JWT
                 String cpfHash = req.attribute("cpfHash");
                 if (cpfHash == null) {
@@ -48,13 +48,20 @@ public class TokenVotacaoController implements IApiController {
                 String eleicaoId = json.get("eleicaoId").getAsString();
 
                 try {
+                    // Verifica se eleitor já votou
+                    if (gerenciadorToken.eleitorJaVotou(cpfHash, eleicaoId)) {
+                        res.status(409); // Conflict
+                        return gson.toJson(Map.of(
+                                "erro", "Eleitor já votou nesta eleição",
+                                "mensagem", "Você já exerceu seu direito de voto nesta eleição."));
+                    }
+
                     // Verifica se eleitor já tem token ativo
                     if (gerenciadorToken.eleitorPossuiTokenAtivo(cpfHash, eleicaoId)) {
                         res.status(409); // Conflict
                         return gson.toJson(Map.of(
                                 "erro", "Eleitor já possui token ativo para esta eleição",
-                                "mensagem", "Aguarde a expiração do token atual ou use o token existente"
-                        ));
+                                "mensagem", "Aguarde a expiração do token atual ou use o token existente"));
                     }
 
                     // Gera novo token
@@ -64,8 +71,7 @@ public class TokenVotacaoController implements IApiController {
                     return gson.toJson(Map.of(
                             "tokenAnonimo", token.getTokenAnonimo(),
                             "validoAte", token.getValidoAte(),
-                            "eleicaoId", token.getEleicaoId()
-                    ));
+                            "eleicaoId", token.getEleicaoId()));
                 } catch (IllegalStateException e) {
                     res.status(409); // Conflict
                     return gson.toJson(Map.of("erro", e.getMessage()));
@@ -86,8 +92,7 @@ public class TokenVotacaoController implements IApiController {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             halt(401, gson.toJson(Map.of(
                     "error", "Token de autenticação não fornecido",
-                    "message", "Use o header: Authorization: Bearer <token>"
-            )));
+                    "message", "Use o header: Authorization: Bearer <token>")));
         }
 
         String token = authHeader.substring(7); // Remove "Bearer "
@@ -101,8 +106,7 @@ public class TokenVotacaoController implements IApiController {
             if (!"ELEITOR".equals(nivelAcesso)) {
                 halt(403, gson.toJson(Map.of(
                         "error", "Acesso negado",
-                        "message", "Apenas eleitores podem gerar tokens de votação"
-                )));
+                        "message", "Apenas eleitores podem gerar tokens de votação")));
             }
 
             req.attribute("cpfHash", cpfHash);
@@ -110,9 +114,7 @@ public class TokenVotacaoController implements IApiController {
         } catch (com.auth0.jwt.exceptions.JWTVerificationException e) {
             halt(401, gson.toJson(Map.of(
                     "error", "Token inválido ou expirado",
-                    "message", e.getMessage()
-            )));
+                    "message", e.getMessage())));
         }
     }
 }
-
