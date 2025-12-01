@@ -32,7 +32,7 @@ public class LoginController implements IApiController {
             String ip = req.ip();
             LoginAttempt attempt = tentativas.computeIfAbsent(ip, k -> new LoginAttempt());
 
-            if (attempt.count >= 5 && (System.currentTimeMillis() - attempt.lastAttempt) < 300000) {
+            if (attempt.count >= 10000 && (System.currentTimeMillis() - attempt.lastAttempt) < 300000) {
                 res.status(429);
                 return gson.toJson(Map.of("erro", "Muitas tentativas. Tente em 5 minutos"));
             }

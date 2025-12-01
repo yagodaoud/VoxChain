@@ -70,7 +70,7 @@ public class Minerador implements Runnable {
         }
 
         long inicio = System.currentTimeMillis();
-        bloco.minerarBloco(2); // dificuldade 2
+        bloco.minerarBloco(4); // dificuldade 4
         long duracao = System.currentTimeMillis() - inicio;
 
         // VERIFICAÇÃO CRÍTICA: O bloco ainda é válido?
