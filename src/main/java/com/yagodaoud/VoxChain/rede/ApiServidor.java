@@ -14,6 +14,7 @@ import com.yagodaoud.VoxChain.modelo.LogAuditoria;
 import com.yagodaoud.VoxChain.modelo.Transacao;
 import com.yagodaoud.VoxChain.modelo.enums.TipoTransacao;
 import com.yagodaoud.VoxChain.rede.api.v1.*;
+import com.yagodaoud.VoxChain.utils.Logger;
 import com.yagodaoud.VoxChain.utils.SecurityUtils;
 import spark.Spark;
 
@@ -137,7 +138,7 @@ public class ApiServidor {
             }
         });
 
-        System.out.println("✓ Servidor API modularizado iniciado. Rotas disponíveis em http://localhost:" + porta + "/api/v1");
+        Logger.info(no.getId(), "✓ Servidor API modularizado iniciado. Rotas disponíveis em http://localhost:" + porta + "/api/v1");
     }
 
     /**

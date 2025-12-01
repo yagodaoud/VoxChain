@@ -1,6 +1,8 @@
 package com.yagodaoud.VoxChain.config;
 
 import com.yagodaoud.VoxChain.rede.PeerDiscovery;
+import com.yagodaoud.VoxChain.utils.Logger;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -93,12 +95,12 @@ public class ConfigManager {
     }
 
     public static void exibirConfiguracao() {
-        System.out.println("\n=== CONFIGURAÇÃO DE DISCOVERY ===");
-        System.out.println("Bootstrap nodes: " + props.getProperty("bootstrap.nodes"));
-        System.out.println("Discovery interval: " + getDiscoveryInterval() + "s");
-        System.out.println("Health check: " + getHealthCheckInterval() + "s");
-        System.out.println("Sync interval: " + getSyncInterval() + "s");
-        System.out.println("Gossip enabled: " + isGossipEnabled());
-        System.out.println("=================================\n");
+        Logger.apresentacao(null,
+                "CONFIGURAÇÃO DE DISCOVERY",
+                "Bootstrap nodes: " + props.getProperty("bootstrap.nodes"),
+                "Discovery interval: " + getDiscoveryInterval() + "s",
+                "Health check: " + getHealthCheckInterval() + "s",
+                "Sync interval: " + getSyncInterval() + "s",
+                "Gossip enabled: " + isGossipEnabled());
     }
 }
