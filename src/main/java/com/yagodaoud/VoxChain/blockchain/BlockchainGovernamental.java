@@ -140,6 +140,42 @@ public class BlockchainGovernamental implements Serializable {
         return resultado.isValido();
     }
 
+    /**
+     * Valida um bloco em seu contexto histórico específico (atemporal).
+     * Verifica se o bloco é válido em relação ao seu pai, independente da ponta da
+     * cadeia.
+     */
+    public synchronized boolean validarBlocoContextual(Bloco bloco) {
+        // 1. Se for bloco gênesis
+        if (bloco.getIndice() == 0 && "0".equals(bloco.getHashAnterior())) {
+            return true;
+        }
+
+        // 2. Busca o bloco pai pelo hash anterior
+        Bloco blocoPai = buscarBlocoPorHash(bloco.getHashAnterior());
+
+        if (blocoPai == null) {
+            Logger.error(null, "[VALIDAÇÃO CONTEXTUAL] Bloco pai não encontrado: " + bloco.getHashAnterior());
+            return false;
+        }
+
+        // 3. Valida o bloco contra o seu pai real
+        BlockValidator.ValidationResult resultado = validator.validarBloco(bloco, blocoPai);
+
+        if (!resultado.isValido()) {
+            Logger.error(null, "[VALIDAÇÃO CONTEXTUAL] " + resultado.getMensagem());
+        }
+
+        return resultado.isValido();
+    }
+
+    private Bloco buscarBlocoPorHash(String hash) {
+        return chain.obterTodosBlocos().stream()
+                .filter(b -> b.getHash().equals(hash))
+                .findFirst()
+                .orElse(null);
+    }
+
     // ========== SINCRONIZAÇÃO ==========
 
     public synchronized void substituir(List<Bloco> cadeiaRemota) {
