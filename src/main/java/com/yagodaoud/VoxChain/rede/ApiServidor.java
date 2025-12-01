@@ -9,6 +9,7 @@ import com.yagodaoud.VoxChain.blockchain.servicos.GerenciadorTokenVotacao;
 import com.yagodaoud.VoxChain.blockchain.servicos.ServicoAdministracao;
 import com.yagodaoud.VoxChain.blockchain.servicos.eleicao.ServicoEleicao;
 import com.yagodaoud.VoxChain.blockchain.servicos.ServicoEleitor;
+import com.yagodaoud.VoxChain.blockchain.servicos.eleicao.ServicoFechamentoEleicao;
 import com.yagodaoud.VoxChain.modelo.Administrador;
 import com.yagodaoud.VoxChain.modelo.LogAuditoria;
 import com.yagodaoud.VoxChain.modelo.Transacao;
@@ -73,6 +74,7 @@ public class ApiServidor {
         GerenciadorTokenVotacao gerenciadorToken = new GerenciadorTokenVotacao();
         ServicoEleicao servicoEleicao = new ServicoEleicao(no.getBlockchain(), servicoAdmin, gerenciadorToken);
         ServicoEleitor servicoEleitor = new ServicoEleitor(no.getBlockchain());
+        ServicoFechamentoEleicao servicoFechamentoEleicao = new ServicoFechamentoEleicao(no.getBlockchain());
 
         // ==================== REGISTRO DE CONTROLLERS ====================
 
@@ -87,7 +89,9 @@ public class ApiServidor {
                 new VotoController(servicoEleicao, servicoAdmin, no, gerenciadorToken),
                 new EleitorController(servicoEleitor),
                 new TokenVotacaoController(gerenciadorToken),
-                new BlocoController(no)
+                new BlocoController(no),
+                new ConsultaVotoAnonimaController(no, gerenciadorToken),
+                new ResultadosController(servicoFechamentoEleicao)
         );
 
         // Define um prefixo global para todas as rotas da API versionada.
