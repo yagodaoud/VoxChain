@@ -285,6 +285,7 @@ public class VotoController implements IApiController {
                 }
             });
 
+
             // GET /api/v1/votos/listar - Lista votos/candidatos (para admins)
             get("/listar", (req, res) -> {
                 res.type("application/json");
