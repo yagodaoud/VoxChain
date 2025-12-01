@@ -53,4 +53,12 @@ public class Eleicao {
         long agora = Instant.now().toEpochMilli();
         return ativa && agora >= dataInicio && agora <= dataFim;
     }
+
+    public boolean isAtiva() {
+        return ativa;
+    }
+
+    public void fechar() {
+        this.ativa = false;
+    }
 }

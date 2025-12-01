@@ -1,0 +1,376 @@
+{
+	"info": {
+		"_postman_id": "voxchain-flow-v1",
+		"name": "VoxChain V1 Flow",
+		"description": "Full flow for VoxChain V1 API: Admin Login -> Create Voter -> Create Election -> Create Candidate -> Voter Login -> Generate Token -> Vote -> Check Results",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Admin Login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"pm.environment.set(\"adminToken\", jsonData.token);",
+							"console.log(\"Admin Token set: \" + jsonData.token);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"cpf\": \"11111111111\",\n    \"senha\": \"superadmin\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "2. Create Eleitor",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{adminToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"cpf\": \"12345678900\",\n    \"senha\": \"password123\",\n    \"zona\": 1,\n    \"secao\": 1\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/eleitores/criar",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"eleitores",
+						"criar"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "3. Create Election",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var currentTimestamp = new Date().getTime();",
+							"var futureTimestamp = currentTimestamp + 86400000; // +1 day",
+							"pm.environment.set(\"dataInicio\", currentTimestamp);",
+							"pm.environment.set(\"dataFim\", futureTimestamp);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"pm.environment.set(\"eleicaoId\", jsonData.id);",
+							"console.log(\"Eleicao ID set: \" + jsonData.id);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{adminToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"nome\": \"Eleição Geral 2024\",\n    \"descricao\": \"Eleição para Presidente\",\n    \"categorias\": [\"PRESIDENTE\"],\n    \"dataInicio\": {{dataInicio}},\n    \"dataFim\": {{dataFim}}\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/eleicoes/criar",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"eleicoes",
+						"criar"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "4. Create Candidate",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{adminToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"eleicaoId\": \"{{eleicaoId}}\",\n    \"numero\": \"99\",\n    \"nome\": \"Candidato Teste\",\n    \"partido\": \"PARTIDO\",\n    \"cargo\": \"PRESIDENTE\",\n    \"uf\": \"SP\",\n    \"fotoUrl\": \"https://example.com/foto.jpg\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/candidatos/criar",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"candidatos",
+						"criar"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "5. Eleitor Login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"pm.environment.set(\"eleitorToken\", jsonData.token);",
+							"console.log(\"Eleitor Token set: \" + jsonData.token);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"cpf\": \"12345678900\",\n    \"senha\": \"password123\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "6. Generate Voting Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"pm.environment.set(\"votingToken\", jsonData.tokenAnonimo);",
+							"console.log(\"Voting Token set: \" + jsonData.tokenAnonimo);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{eleitorToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"eleicaoId\": \"{{eleicaoId}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/tokens/gerar",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"tokens",
+						"gerar"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "7. Vote",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"tokenVotacao\": \"{{votingToken}}\",\n    \"numeroCandidato\": \"99\",\n    \"eleicaoId\": \"{{eleicaoId}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/votos/registrar",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"votos",
+						"registrar"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "8. Check Partial Results",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/resultados/{{eleicaoId}}/parcial",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"resultados",
+						"{{eleicaoId}}",
+						"parcial"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "9. Close Election (Admin)",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{adminToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/resultados/fechar/{{eleicaoId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"resultados",
+						"fechar",
+						"{{eleicaoId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "10. Check Final Results",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/resultados/{{eleicaoId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"resultados",
+						"{{eleicaoId}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:4567/api/v1",
+			"type": "string"
+		}
+	]
+}

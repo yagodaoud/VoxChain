@@ -39,8 +39,7 @@ public class BlocoController implements IApiController {
                         res.status(404);
                         return gson.toJson(Map.of(
                                 "erro", "Bloco não encontrado",
-                                "hash", hash
-                        ));
+                                "hash", hash));
                     }
 
                     // Converte bloco para formato com votos
@@ -61,8 +60,7 @@ public class BlocoController implements IApiController {
                     res.status(500);
                     return gson.toJson(Map.of(
                             "erro", "Erro ao buscar bloco",
-                            "mensagem", e.getMessage()
-                    ));
+                            "mensagem", e.getMessage()));
                 }
             });
 
@@ -78,16 +76,15 @@ public class BlocoController implements IApiController {
                         res.status(404);
                         return gson.toJson(Map.of(
                                 "valido", false,
-                                "mensagem", "Bloco não encontrado"
-                        ));
+                                "mensagem", "Bloco não encontrado"));
                     }
 
-                    boolean valido = no.getBlockchain().validarBloco(bloco);
+                    boolean valido = no.getBlockchain().validarBlocoContextual(bloco);
 
                     Map<String, Object> resultado = new HashMap<>();
                     resultado.put("valido", valido);
                     resultado.put("mensagem", valido
-                            ? "Bloco válido e integrado na cadeia"
+                            ? "Bloco estruturalmente válido em seu contexto original"
                             : "Bloco inválido ou corrompido");
                     resultado.put("hash", hash);
                     resultado.put("indice", bloco.getIndice());
@@ -99,8 +96,7 @@ public class BlocoController implements IApiController {
                     res.status(500);
                     return gson.toJson(Map.of(
                             "valido", false,
-                            "mensagem", "Erro ao validar bloco: " + e.getMessage()
-                    ));
+                            "mensagem", "Erro ao validar bloco: " + e.getMessage()));
                 }
             });
 
@@ -116,8 +112,7 @@ public class BlocoController implements IApiController {
                         res.status(404);
                         return gson.toJson(Map.of(
                                 "erro", "Bloco não encontrado",
-                                "hash", hash
-                        ));
+                                "hash", hash));
                     }
 
                     List<Map<String, Object>> votos = extrairVotosDoBloco(bloco);
@@ -135,8 +130,7 @@ public class BlocoController implements IApiController {
                     res.status(500);
                     return gson.toJson(Map.of(
                             "erro", "Erro ao buscar votos do bloco",
-                            "mensagem", e.getMessage()
-                    ));
+                            "mensagem", e.getMessage()));
                 }
             });
 
@@ -151,8 +145,7 @@ public class BlocoController implements IApiController {
                     if (bloco == null) {
                         res.status(404);
                         return gson.toJson(Map.of(
-                                "erro", "Bloco não encontrado"
-                        ));
+                                "erro", "Bloco não encontrado"));
                     }
 
                     List<Map<String, Object>> transacoes = bloco.getTransacoes().stream()
@@ -178,8 +171,7 @@ public class BlocoController implements IApiController {
                     res.status(500);
                     return gson.toJson(Map.of(
                             "erro", "Erro ao buscar transações",
-                            "mensagem", e.getMessage()
-                    ));
+                            "mensagem", e.getMessage()));
                 }
             });
         });

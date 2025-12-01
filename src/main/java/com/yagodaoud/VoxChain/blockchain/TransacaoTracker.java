@@ -1,6 +1,8 @@
 package com.yagodaoud.VoxChain.blockchain;
 
 import com.yagodaoud.VoxChain.modelo.Transacao;
+import com.yagodaoud.VoxChain.utils.Logger;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -34,14 +36,10 @@ public class TransacaoTracker {
         info.registrar(evento);
 
         if (info.vezesSeen > 1) {
-            System.out.println("⚠️  DUPLICATA DETECTADA!");
-            System.out.println("   ID: " + id);
-            System.out.println("   Vezes visto: " + info.vezesSeen);
-            System.out.println("   Histórico:");
+            Logger.debug(noId, "⚠️  DUPLICATA DETECTADA! ID: " + id + " | Vezes visto: " + info.vezesSeen);
             for (String e : info.eventos) {
-                System.out.println("     " + e);
+                Logger.debug(noId, "   Histórico: " + e);
             }
-            System.out.println();
         }
     }
 

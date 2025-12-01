@@ -2,6 +2,7 @@ package com.yagodaoud.VoxChain.blockchain.sync;
 
 import com.yagodaoud.VoxChain.blockchain.Bloco;
 import com.yagodaoud.VoxChain.blockchain.core.BlockValidator;
+import com.yagodaoud.VoxChain.utils.Logger;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -50,8 +51,7 @@ public class ConflictResolver {
                 // Remota é continuação da local
                 return ResolutionResult.sincronizar(
                         cadeiaRemota,
-                        "Cadeia remota é continuação da local"
-                );
+                        "Cadeia remota é continuação da local");
 
             case LOCAL_AHEAD:
                 // Local está à frente
@@ -70,7 +70,7 @@ public class ConflictResolver {
      * Resolve fork usando a estratégia configurada
      */
     private ResolutionResult resolverFork(List<Bloco> cadeiaLocal, List<Bloco> cadeiaRemota) {
-        System.out.println("[FORK] Fork detectado! Aplicando estratégia: " + strategy);
+        Logger.info(null, "[FORK] Fork detectado! Aplicando estratégia: " + strategy);
 
         switch (strategy) {
             case LONGEST_CHAIN:
@@ -140,8 +140,7 @@ public class ConflictResolver {
             return ResolutionResult.sincronizar(
                     cadeiaRemota,
                     String.format("Cadeia remota mais longa (%d vs %d blocos)",
-                            cadeiaRemota.size(), cadeiaLocal.size())
-            );
+                            cadeiaRemota.size(), cadeiaLocal.size()));
         } else if (cadeiaRemota.size() == cadeiaLocal.size()) {
             // Empate - usa hash como desempate
             String hashLocal = cadeiaLocal.get(cadeiaLocal.size() - 1).getHash();
@@ -150,15 +149,13 @@ public class ConflictResolver {
             if (hashRemoto.compareTo(hashLocal) < 0) {
                 return ResolutionResult.sincronizar(
                         cadeiaRemota,
-                        "Empate no tamanho - hash remoto menor (desempate)"
-                );
+                        "Empate no tamanho - hash remoto menor (desempate)");
             }
         }
 
         return ResolutionResult.manter(
                 String.format("Cadeia local mantida (%d >= %d blocos)",
-                        cadeiaLocal.size(), cadeiaRemota.size())
-        );
+                        cadeiaLocal.size(), cadeiaRemota.size()));
     }
 
     /**
@@ -172,14 +169,12 @@ public class ConflictResolver {
             return ResolutionResult.sincronizar(
                     cadeiaRemota,
                     String.format("Cadeia remota com mais trabalho (%d vs %d)",
-                            trabalhoRemoto, trabalhoLocal)
-            );
+                            trabalhoRemoto, trabalhoLocal));
         }
 
         return ResolutionResult.manter(
                 String.format("Cadeia local mantida (trabalho: %d >= %d)",
-                        trabalhoLocal, trabalhoRemoto)
-        );
+                        trabalhoLocal, trabalhoRemoto));
     }
 
     /**
@@ -230,8 +225,7 @@ public class ConflictResolver {
                 blocosLocal,
                 blocosRemoto,
                 calcularTrabalhoAcumulado(blocosLocal),
-                calcularTrabalhoAcumulado(blocosRemoto)
-        );
+                calcularTrabalhoAcumulado(blocosRemoto));
     }
 
     public void setStrategy(ConflictResolutionStrategy strategy) {
@@ -241,16 +235,16 @@ public class ConflictResolver {
     // ========== ENUMS E CLASSES AUXILIARES ==========
 
     public enum ConflictType {
-        NO_CONFLICT,      // Cadeias idênticas
-        REMOTE_AHEAD,     // Remota é continuação da local
-        LOCAL_AHEAD,      // Local está à frente
-        FORK              // Divergência real (fork)
+        NO_CONFLICT, // Cadeias idênticas
+        REMOTE_AHEAD, // Remota é continuação da local
+        LOCAL_AHEAD, // Local está à frente
+        FORK // Divergência real (fork)
     }
 
     public enum ConflictResolutionStrategy {
-        LONGEST_CHAIN,    // Cadeia mais longa vence (Bitcoin)
-        MOST_WORK,        // Maior trabalho acumulado
-        FIRST_SEEN        // Primeira cadeia vista (mantém local)
+        LONGEST_CHAIN, // Cadeia mais longa vence (Bitcoin)
+        MOST_WORK, // Maior trabalho acumulado
+        FIRST_SEEN // Primeira cadeia vista (mantém local)
     }
 
     /**
@@ -302,9 +296,9 @@ public class ConflictResolver {
     }
 
     public enum ResolutionAction {
-        SYNC,   // Sincronizar com cadeia remota
-        KEEP,   // Manter cadeia local
-        ERROR   // Erro na resolução
+        SYNC, // Sincronizar com cadeia remota
+        KEEP, // Manter cadeia local
+        ERROR // Erro na resolução
     }
 
     /**
@@ -318,7 +312,7 @@ public class ConflictResolver {
         private final long trabalhoRemoto;
 
         public ForkAnalysis(int pontoDivergencia, List<Bloco> blocosLocal,
-                            List<Bloco> blocosRemoto, long trabalhoLocal, long trabalhoRemoto) {
+                List<Bloco> blocosRemoto, long trabalhoLocal, long trabalhoRemoto) {
             this.pontoDivergencia = pontoDivergencia;
             this.blocosLocal = blocosLocal;
             this.blocosRemoto = blocosRemoto;
@@ -355,8 +349,7 @@ public class ConflictResolver {
                             "  Branch remoto: %d blocos, trabalho=%d",
                     pontoDivergencia,
                     blocosLocal.size(), trabalhoLocal,
-                    blocosRemoto.size(), trabalhoRemoto
-            );
+                    blocosRemoto.size(), trabalhoRemoto);
         }
     }
 }

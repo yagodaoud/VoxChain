@@ -9,11 +9,13 @@ import com.yagodaoud.VoxChain.blockchain.servicos.GerenciadorTokenVotacao;
 import com.yagodaoud.VoxChain.blockchain.servicos.ServicoAdministracao;
 import com.yagodaoud.VoxChain.blockchain.servicos.eleicao.ServicoEleicao;
 import com.yagodaoud.VoxChain.blockchain.servicos.ServicoEleitor;
+import com.yagodaoud.VoxChain.blockchain.servicos.eleicao.ServicoFechamentoEleicao;
 import com.yagodaoud.VoxChain.modelo.Administrador;
 import com.yagodaoud.VoxChain.modelo.LogAuditoria;
 import com.yagodaoud.VoxChain.modelo.Transacao;
 import com.yagodaoud.VoxChain.modelo.enums.TipoTransacao;
 import com.yagodaoud.VoxChain.rede.api.v1.*;
+import com.yagodaoud.VoxChain.utils.Logger;
 import com.yagodaoud.VoxChain.utils.SecurityUtils;
 import spark.Spark;
 
@@ -72,6 +74,7 @@ public class ApiServidor {
         GerenciadorTokenVotacao gerenciadorToken = new GerenciadorTokenVotacao();
         ServicoEleicao servicoEleicao = new ServicoEleicao(no.getBlockchain(), servicoAdmin, gerenciadorToken);
         ServicoEleitor servicoEleitor = new ServicoEleitor(no.getBlockchain());
+        ServicoFechamentoEleicao servicoFechamentoEleicao = new ServicoFechamentoEleicao(no.getBlockchain());
 
         // ==================== REGISTRO DE CONTROLLERS ====================
 
@@ -86,7 +89,9 @@ public class ApiServidor {
                 new VotoController(servicoEleicao, servicoAdmin, no, gerenciadorToken),
                 new EleitorController(servicoEleitor),
                 new TokenVotacaoController(gerenciadorToken),
-                new BlocoController(no)
+                new BlocoController(no),
+                new ConsultaVotoAnonimaController(no, gerenciadorToken),
+                new ResultadosController(servicoFechamentoEleicao)
         );
 
         // Define um prefixo global para todas as rotas da API versionada.
@@ -137,7 +142,7 @@ public class ApiServidor {
             }
         });
 
-        System.out.println("✓ Servidor API modularizado iniciado. Rotas disponíveis em http://localhost:" + porta + "/api/v1");
+        Logger.info(no.getId(), "✓ Servidor API modularizado iniciado. Rotas disponíveis em http://localhost:" + porta + "/api/v1");
     }
 
     /**

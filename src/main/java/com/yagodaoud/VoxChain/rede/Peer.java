@@ -4,6 +4,7 @@ import com.yagodaoud.VoxChain.blockchain.Bloco;
 import com.yagodaoud.VoxChain.blockchain.TransacaoTracker;
 import com.yagodaoud.VoxChain.blockchain.No;
 import com.yagodaoud.VoxChain.modelo.Transacao;
+import com.yagodaoud.VoxChain.utils.Logger;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -36,15 +37,15 @@ public class Peer implements Runnable {
             while (conectado && !Thread.currentThread().isInterrupted()) {
                 MensagemP2P msg = (MensagemP2P) input.readObject();
 
-                System.out.println("[" + noLocal.getId() + "] Mensagem recebida de " +
+                Logger.network(noLocal.getId(), "Mensagem recebida de " +
                         msg.getRemetente() + ": " + msg.getTipo());
 
                 processarMensagem(msg);
             }
         } catch (EOFException e) {
-            System.out.println("[" + noLocal.getId() + "] Peer " + id + " desconectado");
+            Logger.network(noLocal.getId(), "Peer " + id + " desconectado");
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("[" + noLocal.getId() + "] Erro ao receber mensagem: " + e.getMessage());
+            Logger.error(noLocal.getId(), "Erro ao receber mensagem: " + e.getMessage());
         } finally {
             desconectar();
         }
@@ -55,10 +56,10 @@ public class Peer implements Runnable {
             synchronized (output) {
                 output.writeObject(msg);
                 output.flush();
-                System.out.println("[" + noLocal.getId() + "] Mensagem enviada para " + id);
+                Logger.network(noLocal.getId(), "Mensagem enviada para " + id);
             }
         } catch (IOException e) {
-            System.err.println("[" + noLocal.getId() + "] Erro ao enviar para " + id + ": " + e.getMessage());
+            Logger.error(noLocal.getId(), "Erro ao enviar para " + id + ": " + e.getMessage());
             desconectar();
         }
     }
@@ -67,17 +68,17 @@ public class Peer implements Runnable {
         switch (msg.getTipo()) {
             case NOVA_TRANSACAO:
                 Transacao t = (Transacao) msg.getPayload();
-                System.out.println("[DEBUG] NOVA_TRANSACAO recebida. ID: " + t.getId() +
+                Logger.debug(noLocal.getId(), "NOVA_TRANSACAO recebida. ID: " + t.getId() +
                         " | Remetente: " + msg.getRemetente() +
                         " | Origem: " + this.id);
 
                 if (!noLocal.getBlockchain().transacaoExiste(t)) {
-                    System.out.println("[DEBUG] Transação NÃO existe no blockchain. Adicionando ao pool...");
+                    Logger.debug(noLocal.getId(), "Transação NÃO existe no blockchain. Adicionando ao pool...");
                     noLocal.getBlockchain().adicionarAoPool(t);
                     TransacaoTracker.rastrearAdicao(noLocal.getId(), t, this.id);
-                    System.out.println("[" + noLocal.getId() + "] ✓ Transação adicionada ao pool: " + t.getId());
+                    Logger.info(noLocal.getId(), "Transação adicionada ao pool: " + t.getId());
                 } else {
-                    System.out.println("[DEBUG] Transação JÁ existe. Rejeitando.");
+                    Logger.debug(noLocal.getId(), "Transação JÁ existe. Rejeitando.");
                     TransacaoTracker.rastrearAdicao(noLocal.getId(), t, "DUPLICATA-" + this.id);
                 }
                 break;
@@ -97,28 +98,28 @@ public class Peer implements Runnable {
                 break;
 
             case PING:
-                System.out.println("[" + noLocal.getId() + "] 📍 PING recebido de " + msg.getRemetente());
+                Logger.network(noLocal.getId(), "PING recebido de " + msg.getRemetente());
                 enviar(new MensagemP2P(TipoMensagem.PONG, null, noLocal.getId()));
                 break;
 
             case PONG:
-                System.out.println("[" + noLocal.getId() + "] 📍 PONG recebido de " + msg.getRemetente());
+                Logger.network(noLocal.getId(), "PONG recebido de " + msg.getRemetente());
                 break;
 
             case LISTAR_PEERS:
-                System.out.println("[" + noLocal.getId() + "] 📋 Peer " + id + " pediu lista de peers");
+                Logger.network(noLocal.getId(), "Peer " + id + " pediu lista de peers");
                 java.util.List<com.yagodaoud.VoxChain.rede.PeerDiscovery.PeerInfo> catalogo = noLocal.obterCatalogoPeers();
                 enviar(new MensagemP2P(TipoMensagem.RESPOSTA_PEERS, catalogo, noLocal.getId()));
                 break;
 
             case RESPOSTA_PEERS:
-                System.out.println("[" + noLocal.getId() + "] 📋 Recebeu lista de peers de " + msg.getRemetente());
+                Logger.network(noLocal.getId(), "Recebeu lista de peers de " + msg.getRemetente());
                 java.util.List<com.yagodaoud.VoxChain.rede.PeerDiscovery.PeerInfo> novosCatalogo = (java.util.List) msg.getPayload();
                 noLocal.atualizarCatalogoPeers(novosCatalogo);
                 break;
 
             default:
-                System.out.println("[" + noLocal.getId() + "] ⚠ Tipo de mensagem desconhecido: " + msg.getTipo());
+                Logger.error(noLocal.getId(), "Tipo de mensagem desconhecido: " + msg.getTipo());
         }
     }
 

@@ -4,6 +4,7 @@ import com.yagodaoud.VoxChain.blockchain.Bloco;
 import com.yagodaoud.VoxChain.modelo.*;
 import com.yagodaoud.VoxChain.modelo.enums.*;
 import com.yagodaoud.VoxChain.blockchain.BlockchainGovernamental;
+import com.yagodaoud.VoxChain.utils.Logger;
 
 import java.util.List;
 
@@ -48,7 +49,7 @@ public class ServicoAdministracao {
             blocoAdmin.minerarBloco(blockchain.getDificuldade());
             blockchain.adicionarBloco(blocoAdmin);
 
-            System.out.println("✓ Super Admin inicializado: " + SUPER_ADMIN_ID);
+            Logger.info("SYSTEM", "Super Admin inicializado: " + SUPER_ADMIN_ID);
         }
     }
 
@@ -57,7 +58,7 @@ public class ServicoAdministracao {
         Administrador admin = blockchain.buscarAdminPorCpfHash(cpfHash);
 
         if (admin == null || !admin.isAtivo()) {
-            System.out.println("[SEGURANÇA] Admin não encontrado ou inativo: " + cpfHash);
+            Logger.info("SECURITY", "Admin não encontrado ou inativo: " + cpfHash);
             return false;
         }
 
@@ -115,7 +116,7 @@ public class ServicoAdministracao {
 
         blockchain.adicionarAoPool(t);
 
-        System.out.println("[ADMIN] Novo admin cadastrado com ID: " + novoAdmin.getId());
+        Logger.info("ADMIN", "Novo admin cadastrado com ID: " + novoAdmin.getId());
 
         return novoAdmin;
     }
@@ -134,7 +135,7 @@ public class ServicoAdministracao {
         }
 
         admin.desativar();
-        System.out.println("[ADMIN] Admin desativado: " + adminId);
+        Logger.info("ADMIN", "Admin desativado: " + adminId);
     }
 
     public void ativarAdmin(String solicitanteId, String adminId) {
@@ -150,7 +151,7 @@ public class ServicoAdministracao {
         }
 
         admin.ativar();
-        System.out.println("[ADMIN] Admin ativado: " + adminId);
+        Logger.info("ADMIN", "Admin ativado: " + adminId);
     }
 
     // ==================== UTILITÁRIOS ====================

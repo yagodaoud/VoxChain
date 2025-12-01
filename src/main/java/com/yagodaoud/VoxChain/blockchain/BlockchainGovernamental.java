@@ -6,6 +6,7 @@ import com.yagodaoud.VoxChain.blockchain.indices.VoteRegistry;
 import com.yagodaoud.VoxChain.blockchain.sync.ChainSynchronizer;
 import com.yagodaoud.VoxChain.blockchain.sync.ConflictResolver;
 import com.yagodaoud.VoxChain.modelo.*;
+import com.yagodaoud.VoxChain.utils.Logger;
 
 import java.io.Serializable;
 import java.util.List;
@@ -123,7 +124,7 @@ public class BlockchainGovernamental implements Serializable {
         BlockValidator.ValidationResult resultado = validator.validarBloco(bloco, ultimoBloco);
 
         if (!resultado.isValido()) {
-            System.err.println("[VALIDAÇÃO] " + resultado.getMensagem());
+            Logger.error(null, "[VALIDAÇÃO] " + resultado.getMensagem());
         }
 
         return resultado.isValido();
@@ -133,10 +134,46 @@ public class BlockchainGovernamental implements Serializable {
         BlockValidator.ValidationResult resultado = validator.validarCadeia(chain.obterTodosBlocos());
 
         if (!resultado.isValido()) {
-            System.err.println("[VALIDAÇÃO] " + resultado.getMensagem());
+            Logger.error(null, "[VALIDAÇÃO] " + resultado.getMensagem());
         }
 
         return resultado.isValido();
+    }
+
+    /**
+     * Valida um bloco em seu contexto histórico específico (atemporal).
+     * Verifica se o bloco é válido em relação ao seu pai, independente da ponta da
+     * cadeia.
+     */
+    public synchronized boolean validarBlocoContextual(Bloco bloco) {
+        // 1. Se for bloco gênesis
+        if (bloco.getIndice() == 0 && "0".equals(bloco.getHashAnterior())) {
+            return true;
+        }
+
+        // 2. Busca o bloco pai pelo hash anterior
+        Bloco blocoPai = buscarBlocoPorHash(bloco.getHashAnterior());
+
+        if (blocoPai == null) {
+            Logger.error(null, "[VALIDAÇÃO CONTEXTUAL] Bloco pai não encontrado: " + bloco.getHashAnterior());
+            return false;
+        }
+
+        // 3. Valida o bloco contra o seu pai real
+        BlockValidator.ValidationResult resultado = validator.validarBloco(bloco, blocoPai);
+
+        if (!resultado.isValido()) {
+            Logger.error(null, "[VALIDAÇÃO CONTEXTUAL] " + resultado.getMensagem());
+        }
+
+        return resultado.isValido();
+    }
+
+    private Bloco buscarBlocoPorHash(String hash) {
+        return chain.obterTodosBlocos().stream()
+                .filter(b -> b.getHash().equals(hash))
+                .findFirst()
+                .orElse(null);
     }
 
     // ========== SINCRONIZAÇÃO ==========
@@ -144,7 +181,7 @@ public class BlockchainGovernamental implements Serializable {
     public synchronized void substituir(List<Bloco> cadeiaRemota) {
         ChainSynchronizer.SyncResult resultado = synchronizer.sincronizar(cadeiaRemota);
 
-        System.out.println("[SYNC] " + resultado);
+        Logger.info(null, "[SYNC] " + resultado);
 
         if (resultado.isSucesso()) {
             pool.limpar();
@@ -256,8 +293,7 @@ public class BlockchainGovernamental implements Serializable {
                 indices.getTotalAdmins(),
                 indices.getTotalEleitores(),
                 indices.getTotalCandidatos(),
-                indices.getTotalEleicoes()
-        );
+                indices.getTotalEleicoes());
     }
 
     @Override
@@ -266,7 +302,6 @@ public class BlockchainGovernamental implements Serializable {
                 "BlockchainGovernamental{tamanho=%d, pool=%d, dificuldade=%d}",
                 getTamanho(),
                 getPoolSize(),
-                getDificuldade()
-        );
+                getDificuldade());
     }
 }

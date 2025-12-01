@@ -1,6 +1,7 @@
 package com.yagodaoud.VoxChain.blockchain;
 
 import com.yagodaoud.VoxChain.modelo.Transacao;
+import com.yagodaoud.VoxChain.utils.Logger;
 
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
@@ -43,7 +44,8 @@ public class Bloco implements Serializable {
             StringBuilder hexString = new StringBuilder();
             for (byte b : hashBytes) {
                 String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
+                if (hex.length() == 1)
+                    hexString.append('0');
                 hexString.append(hex);
             }
             return hexString.toString();
@@ -69,7 +71,7 @@ public class Bloco implements Serializable {
             hash = calcularHash();
         }
         this.assinaturaMinerador = gerarAssinaturaMinerador();
-        System.out.println("⛏️  Bloco " + indice + " minerado por " + mineradoPor +
+        Logger.info(null, "⛏️  Bloco " + indice + " minerado por " + mineradoPor +
                 " | Hash: " + getHashTruncado(12));
     }
 
@@ -80,7 +82,8 @@ public class Bloco implements Serializable {
             StringBuilder sb = new StringBuilder();
             for (byte b : assinatura) {
                 String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) sb.append('0');
+                if (hex.length() == 1)
+                    sb.append('0');
                 sb.append(hex);
             }
             return sb.toString();
