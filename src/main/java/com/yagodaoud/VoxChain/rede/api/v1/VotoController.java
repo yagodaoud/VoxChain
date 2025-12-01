@@ -1,17 +1,23 @@
 package com.yagodaoud.VoxChain.rede.api.v1;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.yagodaoud.VoxChain.blockchain.Bloco;
 import com.yagodaoud.VoxChain.blockchain.No;
 import com.yagodaoud.VoxChain.blockchain.servicos.GerenciadorTokenVotacao;
 import com.yagodaoud.VoxChain.blockchain.servicos.ServicoAdministracao;
 import com.yagodaoud.VoxChain.blockchain.servicos.eleicao.ServicoEleicao;
+import com.yagodaoud.VoxChain.modelo.Candidato;
+import com.yagodaoud.VoxChain.modelo.Eleicao;
 import com.yagodaoud.VoxChain.modelo.Eleitor;
 import com.yagodaoud.VoxChain.modelo.Transacao;
 import com.yagodaoud.VoxChain.modelo.Voto;
+import com.yagodaoud.VoxChain.modelo.enums.CargoCandidato;
 import com.yagodaoud.VoxChain.modelo.enums.TipoTransacao;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -86,8 +92,7 @@ public class VotoController implements IApiController {
                     res.status(400);
                     return gson.toJson(Map.of(
                             "erro", "CPF é obrigatório",
-                            "mensagem", "Informe o CPF como query parameter: ?cpf=12345678900"
-                    ));
+                            "mensagem", "Informe o CPF como query parameter: ?cpf=12345678900"));
                 }
 
                 try {
@@ -106,8 +111,7 @@ public class VotoController implements IApiController {
                         return gson.toJson(Map.of(
                                 "totalVotos", 0,
                                 "votos", new ArrayList<>(),
-                                "mensagem", "Nenhum voto encontrado para este eleitor"
-                        ));
+                                "mensagem", "Nenhum voto encontrado para este eleitor"));
                     }
 
                     // Busca votos na blockchain usando os tokens
@@ -118,8 +122,7 @@ public class VotoController implements IApiController {
                     res.status(200);
                     return gson.toJson(Map.of(
                             "totalVotos", meusVotos.size(),
-                            "votos", meusVotos
-                    ));
+                            "votos", meusVotos));
 
                 } catch (Exception e) {
                     System.err.println("[VOTOS] Erro ao buscar votos: " + e.getMessage());
@@ -128,12 +131,11 @@ public class VotoController implements IApiController {
                     res.status(500);
                     return gson.toJson(Map.of(
                             "erro", "Erro ao buscar votos",
-                            "mensagem", e.getMessage()
-                    ));
+                            "mensagem", e.getMessage()));
                 }
             });
 
-            // POST /api/v1/votos/
+            // POST /api/v1/votos/batch - Registra múltiplos votos em batch
             post("/batch", (req, res) -> {
                 res.type("application/json");
 
@@ -145,66 +147,141 @@ public class VotoController implements IApiController {
 
                 String tokenVotacao = json.has("tokenVotacao") ? json.get("tokenVotacao").getAsString() : null;
                 String eleicaoId = json.has("eleicaoId") ? json.get("eleicaoId").getAsString() : null;
+                JsonArray votosArray = json.has("votos") ? json.getAsJsonArray("votos") : null;
 
-                if (tokenVotacao == null || eleicaoId == null) {
+                if (tokenVotacao == null || eleicaoId == null || votosArray == null) {
                     res.status(400);
-                    return gson.toJson(Map.of("erro", "tokenVotacao e eleicaoId são obrigatórios"));
+                    return gson.toJson(Map.of("erro", "tokenVotacao, eleicaoId e votos são obrigatórios"));
+                }
+
+                if (votosArray.size() == 0) {
+                    res.status(400);
+                    return gson.toJson(Map.of("erro", "Lista de votos não pode estar vazia"));
                 }
 
                 try {
-                    var votosArray = json.getAsJsonArray("votos");
-                    if (votosArray == null || votosArray.size() == 0) {
+                    // 1. Validar token uma vez
+                    if (!gerenciadorToken.validarToken(tokenVotacao, eleicaoId)) {
                         res.status(400);
-                        return gson.toJson(Map.of("erro", "A lista de votos não pode estar vazia"));
+                        return gson.toJson(Map.of("erro", "Token de votação inválido ou expirado"));
                     }
 
-                    List<Map<String, String>> resultados = new ArrayList<>();
+                    // 2. Verificar se eleição está aberta
+                    Eleicao eleicao = no.getBlockchain().buscarEleicao(eleicaoId);
+                    if (eleicao == null) {
+                        res.status(400);
+                        return gson.toJson(Map.of("erro", "Eleição não encontrada"));
+                    }
 
-                    for (var votoElement : votosArray) {
-                        JsonObject votoJson = votoElement.getAsJsonObject();
+                    long agora = System.currentTimeMillis();
+                    if (agora < eleicao.getDataInicio()) {
+                        res.status(400);
+                        return gson.toJson(Map.of("erro", "Eleição ainda não iniciou"));
+                    }
+                    if (agora > eleicao.getDataFim()) {
+                        res.status(400);
+                        return gson.toJson(Map.of("erro", "Eleição já encerrou"));
+                    }
+                    if (!eleicao.estaAberta()) {
+                        res.status(400);
+                        return gson.toJson(Map.of("erro", "Eleição não está aberta"));
+                    }
 
-                        String categoria = votoJson.has("categoria") ? votoJson.get("categoria").getAsString() : null;
-                        String numeroVoto = votoJson.has("numeroVoto") ? votoJson.get("numeroVoto").getAsString() : null;
+                    // 3. Processar cada voto
+                    List<Transacao> transacoesCriadas = new ArrayList<>();
+                    List<String> erros = new ArrayList<>();
 
-                        if (categoria == null || numeroVoto == null) {
-                            resultados.add(Map.of(
-                                    "categoria", categoria != null ? categoria : "desconhecida",
-                                    "status", "erro",
-                                    "mensagem", "categoria e numeroVoto são obrigatórios"
-                            ));
+                    for (int i = 0; i < votosArray.size(); i++) {
+                        JsonObject votoJson = votosArray.get(i).getAsJsonObject();
+                        String categoriaId = votoJson.has("categoriaId") ? votoJson.get("categoriaId").getAsString()
+                                : null;
+                        String numeroVoto = votoJson.has("numeroVoto") ? votoJson.get("numeroVoto").getAsString()
+                                : null;
+
+                        if (categoriaId == null || numeroVoto == null) {
+                            erros.add("Voto " + (i + 1) + ": categoriaId e numeroVoto são obrigatórios");
                             continue;
                         }
 
                         try {
-                            // Registra o voto individualmente
-                            // (caso o método registrarVoto precise do tipo, podemos converter o enum aqui)
-                            servicoEleicao.registrarVoto(tokenVotacao, numeroVoto, eleicaoId);
+                            // Converter categoriaId para CargoCandidato
+                            CargoCandidato cargo;
+                            try {
+                                cargo = CargoCandidato.valueOf(categoriaId);
+                            } catch (IllegalArgumentException e) {
+                                erros.add("Voto " + (i + 1) + ": Categoria inválida: " + categoriaId);
+                                continue;
+                            }
 
-                            resultados.add(Map.of(
-                                    "categoria", categoria,
-                                    "status", "sucesso",
-                                    "mensagem", "Voto registrado com sucesso"
-                            ));
+                            // Buscar candidato pelo número
+                            Candidato candidato = no.getBlockchain().buscarCandidato(numeroVoto);
+                            if (candidato == null) {
+                                erros.add("Voto " + (i + 1) + ": Candidato não encontrado com número " + numeroVoto);
+                                continue;
+                            }
+
+                            // Verificar se candidato pertence à eleição
+                            if (!candidato.getEleicaoId().equals(eleicaoId)) {
+                                erros.add("Voto " + (i + 1) + ": Candidato não pertence a esta eleição");
+                                continue;
+                            }
+
+                            // Verificar se o cargo do candidato corresponde à categoria
+                            if (candidato.getCargo() != cargo) {
+                                erros.add("Voto " + (i + 1) + ": Cargo do candidato (" + candidato.getCargo() +
+                                        ") não corresponde à categoria informada (" + cargo + ")");
+                                continue;
+                            }
+
+                            // Criar voto
+                            Voto voto = new Voto(tokenVotacao, numeroVoto, candidato.getCargo().toString(), eleicaoId);
+
+                            // Criar transação
+                            Transacao transacao = new Transacao(TipoTransacao.VOTO, voto, "ANONIMO");
+                            no.getBlockchain().adicionarAoPool(transacao);
+                            transacoesCriadas.add(transacao);
+
                         } catch (Exception e) {
-                            resultados.add(Map.of(
-                                    "categoria", categoria,
-                                    "status", "erro",
-                                    "mensagem", e.getMessage()
-                            ));
+                            erros.add("Voto " + (i + 1) + ": " + e.getMessage());
                         }
                     }
 
-                    boolean temErro = resultados.stream().anyMatch(r -> r.get("status").equals("erro"));
-                    res.status(temErro ? 207 : 201); // 207 = Multi-Status (alguns erros)
+                    // 4. Se houver erros em todos os votos, retornar erro
+                    if (transacoesCriadas.isEmpty()) {
+                        res.status(400);
+                        return gson.toJson(Map.of(
+                                "erro", "Nenhum voto foi registrado",
+                                "detalhes", erros));
+                    }
 
-                    return gson.toJson(Map.of(
-                            "mensagem", "Processamento de votos concluído",
-                            "resultados", resultados
-                    ));
+                    // 5. Marcar token como usado apenas após todos os votos válidos serem
+                    // processados
+                    gerenciadorToken.marcarTokenComoUsado(tokenVotacao);
 
+                    // 6. Gerar hash combinado das transações criadas
+                    String hash = gerarHashTransacoes(transacoesCriadas);
+
+                    // 7. Retornar sucesso
+                    Map<String, Object> resposta = new HashMap<>();
+                    resposta.put("hash", hash);
+                    resposta.put("votosRegistrados", transacoesCriadas.size());
+                    resposta.put("totalVotos", votosArray.size());
+                    if (!erros.isEmpty()) {
+                        resposta.put("avisos", erros);
+                    }
+
+                    res.status(201);
+                    return gson.toJson(resposta);
+
+                } catch (IllegalStateException e) {
+                    res.status(400);
+                    return gson.toJson(Map.of("erro", e.getMessage()));
+                } catch (IllegalArgumentException e) {
+                    res.status(400);
+                    return gson.toJson(Map.of("erro", e.getMessage()));
                 } catch (Exception e) {
                     res.status(500);
-                    return gson.toJson(Map.of("erro", "Erro ao processar votos em batch: " + e.getMessage()));
+                    return gson.toJson(Map.of("erro", "Erro ao registrar votos em batch: " + e.getMessage()));
                 }
             });
 
@@ -243,7 +320,8 @@ public class VotoController implements IApiController {
 
         // Percorre todos os blocos da blockchain
         for (Bloco bloco : no.getBlockchain().getBlocos()) {
-            if (bloco.getIndice() == 0) continue; // Pula bloco genesis
+            if (bloco.getIndice() == 0)
+                continue; // Pula bloco genesis
 
             // Para cada transação no bloco
             for (Transacao transacao : bloco.getTransacoes()) {
@@ -284,5 +362,42 @@ public class VotoController implements IApiController {
         System.out.println("[DEBUG] Busca concluída: " + meusVotos.size() + " votos encontrados");
 
         return meusVotos;
+    }
+
+    /**
+     * Gera um hash combinado das transações criadas para retornar ao cliente
+     */
+    private String gerarHashTransacoes(List<Transacao> transacoes) {
+        try {
+            StringBuilder sb = new StringBuilder();
+            for (Transacao t : transacoes) {
+                sb.append(t.getId());
+            }
+
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = digest.digest(sb.toString().getBytes(StandardCharsets.UTF_8));
+
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hashBytes) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (Exception e) {
+            // Fallback: retorna hash do último bloco
+            try {
+                int tamanho = no.getBlockchain().getTamanho();
+                if (tamanho > 0) {
+                    Bloco ultimoBloco = no.getBlockchain().getBlocos().get(tamanho - 1);
+                    return ultimoBloco != null ? ultimoBloco.getHash() : "unknown";
+                }
+            } catch (Exception ex) {
+                // Ignora erro no fallback
+            }
+            return "unknown";
+        }
     }
 }
