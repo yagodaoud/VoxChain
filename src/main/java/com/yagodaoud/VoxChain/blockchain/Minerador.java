@@ -92,13 +92,10 @@ public class Minerador implements Runnable {
                 ", Hash: " + bloco.getHashTruncado(16) +
                 ", Transações: " + bloco.getTransacoes().size());
 
-        // ★ CORRIGIDO: Adiciona na própria cadeia
         no.getBlockchain().adicionarBloco(bloco);
 
-        // ★ CORRIGIDO: Remove as transações do pool (CRÍTICO!)
         no.getBlockchain().limparTransacoesProcessadas(bloco);
 
-        // Broadcast para a com.yagodaoud.VoxChain.rede
         no.broadcastBloco(bloco);
     }
 
